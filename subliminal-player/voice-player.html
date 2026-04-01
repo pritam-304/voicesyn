@@ -1313,35 +1313,45 @@ function setOrbPlay() {
 async function autoInit() {
   if (!AFFIRMATIONS.length) return; // fall through to manual file picker
 
-  // Hide file picker UI, show loading state
-  document.querySelector('.drop-zone').style.display        = 'none';
-  document.querySelector('.file-list').style.display        = 'none';
-  document.querySelectorAll('.setup-label').forEach(el => el.style.display = 'none');
-  document.querySelector('.texts-area').style.display       = 'none';
-  document.getElementById('beginBtn').style.display         = 'none';
-  document.getElementById('setupErr').style.display         = 'none';
-  document.getElementById('autoLoadState').style.display    = 'block';
-
+  // ── Immediately switch to session screen ────────────────────────
   totalAff = AFFIRMATIONS.length;
   totalNum.textContent = totalAff;
+  setupPanel.classList.add('hidden');
+  sessionUI.classList.add('visible');
+
+  // Show loading state in orb area
+  affNum.style.opacity  = '1';
+  affNum.textContent    = 'Loading audio…';
+  affText.style.opacity = '1';
+  affText.style.transform = 'none';
+  affText.style.fontStyle = 'normal';
+  affText.style.fontSize  = '13px';
+  affText.style.color     = 'var(--text-faint)';
+  affText.textContent     = 'Fetching your affirmations — please wait';
+  orbBtn.style.pointerEvents = 'none';
+  orbBtn.style.opacity       = '0.4';
 
   initAudio();
   try {
     await decodeAllUrls(AFFIRMATIONS);
   } catch(e) {
-    document.getElementById('autoLoadState').style.display  = 'none';
-    document.querySelector('.drop-zone').style.display      = '';
-    document.getElementById('beginBtn').style.display       = '';
-    document.getElementById('setupErr').style.display       = '';
-    document.querySelector('.texts-area').style.display     = '';
-    document.querySelectorAll('.setup-label').forEach(el => el.style.display = '');
-    document.getElementById('setupErr').textContent = 'Could not load audio: ' + e.message;
+    affNum.textContent  = 'Load failed';
+    affText.textContent = e.message;
+    affText.style.color = 'var(--rose-dim)';
+    orbBtn.style.opacity = '0.2';
     return;
   }
 
-  timeDuration.textContent = fmtTime(Math.round(totalDurSecs));
-  setupPanel.classList.add('hidden');
-  sessionUI.classList.add('visible');
+  // ── Ready ────────────────────────────────────────────────────────
+  timeDuration.textContent   = fmtTime(Math.round(totalDurSecs));
+  orbBtn.style.pointerEvents = '';
+  orbBtn.style.opacity       = '';
+
+  affNum.textContent  = 'Tap the orb to begin';
+  affText.style.fontStyle = 'normal';
+  affText.style.fontSize  = '14px';
+  affText.style.color     = 'var(--text-dim)';
+  affText.textContent     = 'Close your eyes. Breathe slowly. Let your mind rest.';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────
