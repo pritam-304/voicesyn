@@ -780,9 +780,9 @@
 const AFFIRMATIONS = [
   { url: "audios/peace.wav", text: "Peace" },
   { url: "audios/clean.wav", text: "Clean Body" },
-  { url: "audios/physics.wav", text: "Physics" },
-  { url: "audios/attract.wav", text: "Attraction" },
-  { url: "audios/self.wav", text: "Self" },
+  // { url: "audios/physics.wav", text: "Physics" },
+  // { url: "audios/attract.wav", text: "Attraction" },
+  // { url: "audios/self.wav", text: "Self" },
   // Add more lines here — one per affirmation file
 ];
 
@@ -990,7 +990,7 @@ async function decodeAllUrls(items) {
   for (let i = 0; i < items.length; i++) {
     if (autoMsg) autoMsg.textContent = `Loading ${i + 1} of ${items.length}…`;
     const res = await fetch(items[i].url);
-    if (!res.ok) throw new Error(`Could not fetch ${items[i].url} (${res.status})`);
+    if (!res.ok) throw new Error(`File not found: ${items[i].url} (HTTP ${res.status}). Make sure the file is pushed to GitHub.`);
     const ab  = await res.arrayBuffer();
     const buf = await audioCtx.decodeAudioData(ab);
     audioBuffers.push(buf);
@@ -1330,6 +1330,14 @@ async function autoInit() {
   affText.textContent     = 'Fetching your affirmations — please wait';
   orbBtn.style.pointerEvents = 'none';
   orbBtn.style.opacity       = '0.4';
+
+  // Detect file:// protocol — fetch() does not work on local files
+  if (location.protocol === 'file:') {
+    affNum.textContent  = 'Cannot auto-load locally';
+    affText.style.color = 'var(--rose-dim)';
+    affText.textContent = 'Open via GitHub Pages URL or run a local server (python -m http.server 8080). file:// protocol blocks audio fetching.';
+    return;
+  }
 
   initAudio();
   try {
