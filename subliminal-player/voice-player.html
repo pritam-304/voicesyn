@@ -646,6 +646,17 @@
 
     <div class="setup-err" id="setupErr"></div>
     <button class="begin-btn" id="beginBtn" disabled>Begin Session</button>
+
+    <!-- Auto-load state (shown when AFFIRMATIONS config is set) -->
+    <div id="autoLoadState" style="display:none;text-align:center;padding:32px 0;">
+      <div class="setup-title" style="margin-bottom:14px;">Loading Your Session</div>
+      <div id="autoLoadMsg" style="font-size:12px;letter-spacing:1.5px;color:var(--text-faint);">Fetching affirmations…</div>
+      <div style="margin-top:20px;display:flex;justify-content:center;gap:6px;" id="autoLoadDots">
+        <div style="width:5px;height:5px;border-radius:50%;background:var(--indigo);animation:dot-pulse 1.4s ease-in-out 0s infinite;"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:var(--indigo);animation:dot-pulse 1.4s ease-in-out 0.2s infinite;"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:var(--indigo);animation:dot-pulse 1.4s ease-in-out 0.4s infinite;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ── Session UI (hidden until files loaded) ── -->
@@ -762,6 +773,17 @@
 </div><!-- /container -->
 
 <script>
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  AFFIRMATIONS CONFIG — edit this block to set your audio files  ║
+// ║  Leave the array empty [] to use the manual file picker instead  ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const AFFIRMATIONS = [
+  // { url: "audios/affirmation_0.wav", text: "I am calm, peaceful, and completely free." },
+  // { url: "audios/affirmation_1.wav", text: "I breathe deeply and cleanly. My lungs are full of pure life." },
+  // { url: "audios/affirmation_2.wav", text: "I am enough. Completely and unconditionally." },
+  // Add more lines here — one per affirmation file
+];
+
 // ─── Stars ───────────────────────────────────────────────────────────
 (function createStars() {
   const c = document.getElementById('starsContainer');
@@ -945,7 +967,7 @@ function ambientFadeOut() {
   ambGain.gain.setTargetAtTime(0, audioCtx.currentTime, 1.5);
 }
 
-// ─── Decode all files into AudioBuffers ──────────────────────────────
+// ─── Decode all File objects into AudioBuffers ───────────────────────
 async function decodeAllFiles(files) {
   audioBuffers = [];
   totalDurSecs = 0;
@@ -953,6 +975,24 @@ async function decodeAllFiles(files) {
     const ab = await f.arrayBuffer();
     const buf = await audioCtx.decodeAudioData(ab);
     audioBuffers.push(buf);
+    totalDurSecs += buf.duration + (PAUSE_MS / 1000);
+  }
+}
+
+// ─── Decode URLs into AudioBuffers (auto-load mode) ───────────────────
+async function decodeAllUrls(items) {
+  audioBuffers = [];
+  affTexts     = [];
+  totalDurSecs = 0;
+  const autoMsg = document.getElementById('autoLoadMsg');
+  for (let i = 0; i < items.length; i++) {
+    if (autoMsg) autoMsg.textContent = `Loading ${i + 1} of ${items.length}…`;
+    const res = await fetch(items[i].url);
+    if (!res.ok) throw new Error(`Could not fetch ${items[i].url} (${res.status})`);
+    const ab  = await res.arrayBuffer();
+    const buf = await audioCtx.decodeAudioData(ab);
+    audioBuffers.push(buf);
+    affTexts.push(items[i].text || `Affirmation ${i + 1}`);
     totalDurSecs += buf.duration + (PAUSE_MS / 1000);
   }
 }
@@ -1209,6 +1249,14 @@ loadNewBtn.addEventListener('click', () => {
   resetState();
   sessionUI.classList.remove('visible');
   setupPanel.classList.remove('hidden');
+  // Restore all setup UI elements (may have been hidden by autoInit)
+  document.querySelector('.drop-zone').style.display        = '';
+  document.querySelector('.file-list').style.display        = '';
+  document.querySelectorAll('.setup-label').forEach(el => el.style.display = '');
+  document.querySelector('.texts-area').style.display       = '';
+  document.getElementById('beginBtn').style.display         = '';
+  document.getElementById('setupErr').style.display         = '';
+  document.getElementById('autoLoadState').style.display    = 'none';
   fileList.innerHTML = '';
   textsArea.value    = '';
   pendingFiles       = [];
@@ -1259,10 +1307,46 @@ function setOrbPlay() {
   orbBtn.classList.remove('playing');
 }
 
+// ─── Auto-init from AFFIRMATIONS config ─────────────────────────────
+async function autoInit() {
+  if (!AFFIRMATIONS.length) return; // fall through to manual file picker
+
+  // Hide file picker UI, show loading state
+  document.querySelector('.drop-zone').style.display        = 'none';
+  document.querySelector('.file-list').style.display        = 'none';
+  document.querySelectorAll('.setup-label').forEach(el => el.style.display = 'none');
+  document.querySelector('.texts-area').style.display       = 'none';
+  document.getElementById('beginBtn').style.display         = 'none';
+  document.getElementById('setupErr').style.display         = 'none';
+  document.getElementById('autoLoadState').style.display    = 'block';
+
+  totalAff = AFFIRMATIONS.length;
+  totalNum.textContent = totalAff;
+
+  initAudio();
+  try {
+    await decodeAllUrls(AFFIRMATIONS);
+  } catch(e) {
+    document.getElementById('autoLoadState').style.display  = 'none';
+    document.querySelector('.drop-zone').style.display      = '';
+    document.getElementById('beginBtn').style.display       = '';
+    document.getElementById('setupErr').style.display       = '';
+    document.querySelector('.texts-area').style.display     = '';
+    document.querySelectorAll('.setup-label').forEach(el => el.style.display = '');
+    document.getElementById('setupErr').textContent = 'Could not load audio: ' + e.message;
+    return;
+  }
+
+  timeDuration.textContent = fmtTime(Math.round(totalDurSecs));
+  setupPanel.classList.add('hidden');
+  sessionUI.classList.add('visible');
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────
 totalNum.textContent = '—';
 affText.classList.add('visible');
 affNum.classList.add('visible');
+autoInit();
 </script>
 </body>
 </html>
