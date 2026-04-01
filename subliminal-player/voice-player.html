@@ -627,55 +627,40 @@
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
 
-  /* ── Saved file checklist ────────────────────── */
-  .saved-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 220px;
-    overflow-y: auto;
+  /* ── Saved file multi-select dropdown ─────────────── */
+  .saved-hint {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+    font-style: italic;
   }
-  .saved-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 12px;
-    background: rgba(92,107,192,0.05);
-    border: 1px solid rgba(92,107,192,0.1);
+  .saved-select {
+    width: 100%;
+    background: rgba(7,9,11,0.9);
+    border: 1px solid rgba(92,107,192,0.25);
     border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-  }
-  .saved-item:hover { border-color: rgba(92,107,192,0.3); background: rgba(92,107,192,0.09); }
-  .saved-item.checked { border-color: rgba(124,143,224,0.45); background: rgba(92,107,192,0.13); }
-  .saved-check {
-    width: 16px; height: 16px;
-    border-radius: 3px;
-    border: 1px solid rgba(92,107,192,0.35);
-    background: transparent;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-  }
-  .saved-item.checked .saved-check {
-    background: var(--indigo);
-    border-color: var(--indigo);
-  }
-  .saved-check::after {
-    content: '';
-    width: 4px; height: 8px;
-    border: 2px solid white;
-    border-top: none; border-left: none;
-    transform: rotate(45deg) translateY(-1px);
-    display: none;
-  }
-  .saved-item.checked .saved-check::after { display: block; }
-  .saved-name {
-    font-size: 12px;
-    letter-spacing: 0.5px;
     color: var(--text-dim);
-    flex: 1;
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    padding: 4px 2px;
+    outline: none;
+    cursor: pointer;
+    min-height: 140px;
+    transition: border-color 0.3s;
+  }
+  .saved-select:focus { border-color: rgba(92,107,192,0.55); }
+  .saved-select option {
+    padding: 9px 12px;
+    background: #0d1014;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .saved-select option:checked {
+    background: rgba(92,107,192,0.35);
+    color: #ffffff;
   }
   .saved-empty {
     font-size: 11px;
@@ -686,7 +671,12 @@
     padding: 18px 0;
     line-height: 1.8;
   }
-  .saved-select-all {
+  .saved-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .saved-action-btn {
     font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -696,10 +686,10 @@
     cursor: pointer;
     font-family: 'Jost', sans-serif;
     font-weight: 400;
-    padding: 0 0 8px 0;
+    padding: 0;
     transition: color 0.2s;
   }
-  .saved-select-all:hover { color: var(--indigo); }
+  .saved-action-btn:hover { color: var(--indigo); }
 </style>
 </head>
 <body>
@@ -727,8 +717,12 @@
 
     <!-- ── Tab: Saved files (from AFFIRMATIONS config) ── -->
     <div class="tab-pane active" id="tab-saved">
-      <button class="saved-select-all" id="selectAllBtn">Select All</button>
-      <div class="saved-list" id="savedList"></div>
+      <div class="saved-hint" id="savedHint">Hold Ctrl / Cmd to select multiple · tap &amp; drag on mobile</div>
+      <select class="saved-select" id="savedSelect" multiple size="6"></select>
+      <div class="saved-actions">
+        <button class="saved-action-btn" id="selAllBtn">Select All</button>
+        <button class="saved-action-btn" id="selNoneBtn">Clear</button>
+      </div>
     </div>
 
     <!-- ── Tab: Local files (manual picker) ── -->
@@ -961,6 +955,18 @@ const bw2 = document.getElementById('bw2');
 const bw3 = document.getElementById('bw3');
 const subIndicator = document.getElementById('subIndicator');
 const completeGlow = document.getElementById('completeGlow');
+
+// ─── Tab switching ──────────────────────────────────────────────────
+let activeTab = 'saved';
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + activeTab));
+    updateBeginBtn();
+  });
+});
 
 // ─── File Loading ────────────────────────────────────────────────────
 let pendingFiles = [];
@@ -1296,12 +1302,12 @@ beginBtn.addEventListener('click', async () => {
 
   try {
     if (activeTab === 'saved') {
-      // Gather checked items in order
-      const checked = [];
-      document.querySelectorAll('.saved-item.checked').forEach(el => {
-        checked.push(AFFIRMATIONS[parseInt(el.dataset.index)]);
-      });
-      if (!checked.length) throw new Error('Select at least one saved file.');
+      // Gather selected options in order
+      const sel = document.getElementById('savedSelect');
+      const checked = Array.from(sel.options)
+        .filter(o => o.selected)
+        .map(o => AFFIRMATIONS[parseInt(o.value)]);
+      if (!checked.length) throw new Error('Select at least one file from the dropdown.');
 
       if (location.protocol === 'file:') {
         throw new Error('Cannot fetch files when opened locally. Use the GitHub Pages URL or run: python -m http.server 8080');
@@ -1416,6 +1422,58 @@ function setOrbPlay() {
   pi.className = 'play-icon';
   orbBtn.appendChild(pi);
   orbBtn.classList.remove('playing');
+}
+
+// ─── Saved files multi-select dropdown ───────────────────────────────
+function renderSavedList() {
+  const sel       = document.getElementById('savedSelect');
+  const hint      = document.getElementById('savedHint');
+  const selAllBtn  = document.getElementById('selAllBtn');
+  const selNoneBtn = document.getElementById('selNoneBtn');
+  sel.innerHTML = '';
+
+  if (!AFFIRMATIONS.length) {
+    sel.style.display  = 'none';
+    if (hint) hint.style.display = 'none';
+    const actEl = document.querySelector('.saved-actions');
+    if (actEl) actEl.style.display = 'none';
+    const empty = document.createElement('div');
+    empty.className = 'saved-empty';
+    empty.innerHTML = 'No saved files configured yet.<br>Add entries to the <strong>AFFIRMATIONS</strong> array<br>at the top of this file\'s script block.';
+    sel.parentNode.insertBefore(empty, sel);
+    return;
+  }
+
+  AFFIRMATIONS.forEach((aff, i) => {
+    const opt = document.createElement('option');
+    opt.value       = i;
+    opt.textContent = aff.text || aff.url.split('/').pop();
+    opt.selected    = true;
+    sel.appendChild(opt);
+  });
+
+  sel.size = Math.min(AFFIRMATIONS.length, 8);
+  sel.addEventListener('change', updateBeginBtn);
+
+  selAllBtn.addEventListener('click', () => {
+    Array.from(sel.options).forEach(o => o.selected = true);
+    updateBeginBtn();
+  });
+  selNoneBtn.addEventListener('click', () => {
+    Array.from(sel.options).forEach(o => o.selected = false);
+    updateBeginBtn();
+  });
+
+  updateBeginBtn();
+}
+
+function updateBeginBtn() {
+  if (activeTab === 'saved') {
+    const sel = document.getElementById('savedSelect');
+    beginBtn.disabled = !sel || Array.from(sel.options).filter(o => o.selected).length === 0;
+  } else {
+    beginBtn.disabled = pendingFiles.length === 0;
+  }
 }
 
 // ─── Init ────────────────────────────────────────────────────────────
