@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pritam · Voice Affirmation Player</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #07090b;
+    --surface: #0d1014;
+    --indigo: #7c8fe0;
+    --indigo-dim: #b8c2f0;
+    --rose: #d47d9e;
+    --rose-dim: #f0aac8;
+    --amber: #c0916b;
+    --amber-dim: #78543b;
+    --text: #ffffff;
+    --text-dim: #ede8ff;
+    --text-faint: #ccc5e8;
+    --glow: rgba(92, 107, 192, 0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 28px 20px 60px;
+    overflow-x: hidden;
+  }
+
+  /* ── Background layers ───────────────────────── */
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--dur) ease-in-out infinite;
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: var(--brightness); }
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 45% at 15% 25%, rgba(92,107,192,0.07) 0%, transparent 65%),
+      radial-gradient(ellipse 45% 55% at 85% 75%, rgba(192,107,138,0.06) 0%, transparent 65%),
+      radial-gradient(ellipse 30% 40% at 50% 50%, rgba(92,107,192,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .complete-glow {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 50% 60% at 50% 50%, rgba(92,107,192,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 2s;
+  }
+  .complete-glow.active { opacity: 1; }
+
+  /* ── Layout ──────────────────────────────────── */
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* ── Header ──────────────────────────────────── */
+  .header { text-align: center; }
+
+  .eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    margin-bottom: 14px;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 300;
+    font-size: clamp(24px, 5vw, 34px);
+    color: var(--text);
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+  }
+
+  .header h1 em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--indigo), var(--rose));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Setup panel ─────────────────────────────── */
+  .setup-panel {
+    width: 100%;
+    background: rgba(13,16,20,0.8);
+    border: 1px solid rgba(92,107,192,0.14);
+    border-radius: 10px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.6s ease;
+  }
+  .setup-panel.hidden {
+    display: none;
+  }
+
+  .setup-title {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    font-weight: 400;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 1px dashed rgba(92,107,192,0.25);
+    border-radius: 8px;
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: rgba(92,107,192,0.03);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: rgba(92,107,192,0.55);
+    background: rgba(92,107,192,0.07);
+  }
+  .drop-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+  }
+  .drop-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+  }
+  .drop-title {
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-weight: 400;
+  }
+  .drop-hint {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+  }
+
+  /* File list */
+  .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    background: rgba(92,107,192,0.05);
+    border-radius: 4px;
+    border: 1px solid rgba(92,107,192,0.1);
+  }
+  .file-num {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--indigo-dim);
+    width: 22px;
+    flex-shrink: 0;
+    font-weight: 400;
+  }
+  .file-name {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .file-dur {
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .file-ok { width: 6px; height: 6px; border-radius: 50%; background: var(--indigo); flex-shrink: 0; }
+
+  /* Texts area */
+  .setup-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 400;
+  }
+  .setup-label .opt {
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+    text-transform: none;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .texts-area {
+    width: 100%;
+    background: rgba(7,9,11,0.8);
+    border: 1px solid rgba(92,107,192,0.12);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.3px;
+    line-height: 1.8;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 90px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .texts-area:focus { border-color: rgba(92,107,192,0.3); }
+  .texts-area::placeholder { color: var(--text-faint); font-style: italic; }
+
+  /* Begin button */
+  .begin-btn {
+    background: linear-gradient(135deg, rgba(92,107,192,0.2), rgba(192,107,138,0.1));
+    border: 1px solid rgba(92,107,192,0.35);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.4s;
+    align-self: center;
+  }
+  .begin-btn:hover {
+    border-color: rgba(92,107,192,0.65);
+    background: linear-gradient(135deg, rgba(92,107,192,0.3), rgba(192,107,138,0.15));
+    box-shadow: 0 0 20px rgba(92,107,192,0.12);
+  }
+  .begin-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .setup-err {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--rose-dim);
+    text-align: center;
+    min-height: 14px;
+  }
+
+  /* ── Session UI (hidden until started) ───────── */
+  .session-ui {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    display: none;
+  }
+  .session-ui.visible { display: flex; }
+
+  /* ── Subliminal badge ────────────────────────── */
+  .subliminal-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(92,107,192,0.08);
+    border: 1px solid rgba(92,107,192,0.15);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    font-weight: 400;
+  }
+  .subliminal-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--indigo);
+    animation: dot-pulse 2s ease-in-out infinite;
+  }
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* ── Orb ─────────────────────────────────────── */
+  .orb-wrap {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(92,107,192,0.12);
+    animation: ring-pulse 5s ease-in-out infinite;
+  }
+  .orb-ring:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+  .orb-ring:nth-child(2) { width: 165px; height: 165px; animation-delay: 1s; border-color: rgba(192,107,138,0.1); }
+  .orb-ring:nth-child(3) { width: 130px; height: 130px; animation-delay: 2s; border-color: rgba(92,107,192,0.18); }
+  @keyframes ring-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.03); opacity: 1; }
+  }
+  .orb-core {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(92,107,192,0.25), rgba(192,107,138,0.12), transparent 80%);
+    border: 1px solid rgba(92,107,192,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    position: relative;
+    z-index: 2;
+    user-select: none;
+  }
+  .orb-core:hover {
+    border-color: rgba(92,107,192,0.5);
+    box-shadow: 0 0 30px rgba(92,107,192,0.15);
+  }
+  .orb-core.playing {
+    animation: orb-breathe 5s ease-in-out infinite;
+    border-color: rgba(92,107,192,0.4);
+  }
+  @keyframes orb-breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(92,107,192,0.1); }
+    50% { transform: scale(1.07); box-shadow: 0 0 50px rgba(92,107,192,0.25), 0 0 80px rgba(192,107,138,0.1); }
+  }
+  .play-icon {
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 11px 0 11px 19px;
+    border-color: transparent transparent transparent rgba(200,200,255,0.8);
+    margin-left: 5px;
+  }
+  .pause-icon { display: flex; gap: 6px; }
+  .pause-bar { width: 4px; height: 20px; background: rgba(200,200,255,0.8); border-radius: 2px; }
+
+  /* ── Affirmation display ─────────────────────── */
+  .affirmation-display {
+    text-align: center;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 12px;
+  }
+  .affirmation-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(17px, 3.2vw, 22px);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1.4s ease, transform 1.4s ease;
+    letter-spacing: 0.2px;
+  }
+  .affirmation-text.visible { opacity: 1; transform: translateY(0); }
+  .affirmation-num {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    opacity: 0;
+    transition: opacity 1s ease 0.4s;
+    font-weight: 400;
+  }
+  .affirmation-num.visible { opacity: 1; }
+
+  /* ── Subliminal wave indicator ───────────────── */
+  .subliminal-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .subliminal-indicator.visible { opacity: 1; }
+  .sub-wave { display: flex; align-items: center; gap: 2px; height: 16px; }
+  .sub-bar {
+    width: 2px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, var(--indigo), var(--rose));
+    animation: sub-wave-anim 1.2s ease-in-out infinite;
+    transform-origin: bottom;
+  }
+  .sub-bar:nth-child(1) { height: 4px; animation-delay: 0s; }
+  .sub-bar:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+  .sub-bar:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+  .sub-bar:nth-child(4) { height: 8px; animation-delay: 0.45s; }
+  .sub-bar:nth-child(5) { height: 4px; animation-delay: 0.6s; }
+  @keyframes sub-wave-anim {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+  .sub-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--indigo-dim); font-weight: 400; }
+
+  /* ── Breathing guide ─────────────────────────── */
+  .breathing {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: center;
+    min-height: 16px;
+    font-weight: 400;
+  }
+  .breath-word { transition: color 0.6s, opacity 0.6s; opacity: 0.3; }
+  .breath-word.active { color: var(--indigo); opacity: 1; }
+
+  /* ── Progress ────────────────────────────────── */
+  .progress-section { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+  .progress-bar-wrap {
+    width: 100%;
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    position: relative;
+    cursor: pointer;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--indigo-dim), var(--indigo), var(--rose));
+    width: 0%;
+    transition: width 0.5s linear;
+  }
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    font-weight: 400;
+  }
+
+  /* ── Controls ────────────────────────────────── */
+  .controls { display: flex; align-items: center; gap: 28px; }
+  .ctrl-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    transition: color 0.3s;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .ctrl-btn:hover { color: var(--indigo); }
+  .ctrl-btn svg { width: 17px; height: 17px; }
+
+  /* ── Volume section ──────────────────────────── */
+  .volume-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 300px;
+  }
+  .vol-row { display: flex; align-items: center; gap: 10px; }
+  .vol-label {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    width: 68px;
+    flex-shrink: 0;
+    font-weight: 400;
+  }
+  .vol-val {
+    font-size: 12px;
+    color: var(--indigo-dim);
+    letter-spacing: 1px;
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+    font-weight: 400;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--indigo);
+    cursor: pointer;
+  }
+
+  /* ── Sub-note ────────────────────────────────── */
+  .sub-note {
+    background: rgba(92,107,192,0.08);
+    border: 1px solid rgba(124,143,224,0.25);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.8;
+    max-width: 360px;
+  }
+  .sub-note strong { color: var(--indigo-dim); letter-spacing: 2px; text-transform: uppercase; font-weight: 400; }
+
+  /* ── Misc ────────────────────────────────────── */
+  .divider { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, var(--indigo-dim), transparent); }
+  .counter { font-size: 12px; letter-spacing: 2px; color: var(--text-dim); text-align: center; font-weight: 400; }
+  .counter span { color: var(--indigo-dim); }
+  .status {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--rose-dim);
+    text-align: center;
+    min-height: 16px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    font-weight: 400;
+  }
+  .status.visible { opacity: 1; }
+
+  /* ── Scrollbar for file list ─────────────────── */
+  .file-list::-webkit-scrollbar { width: 3px; }
+  .file-list::-webkit-scrollbar-track { background: transparent; }
+  .file-list::-webkit-scrollbar-thumb { background: rgba(92,107,192,0.2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="stars" id="starsContainer"></div>
+<div class="complete-glow" id="completeGlow"></div>
+
+<div class="container">
+
+  <!-- ── Header ──────────────────────────────── -->
+  <div class="header">
+    <p class="eyebrow">Voice Affirmation · Subliminal Player</p>
+    <h1>You Are Already<br><em>Everything You Desire</em></h1>
+  </div>
+
+  <!-- ── Setup Panel ─────────────────────────── -->
+  <div class="setup-panel" id="setupPanel">
+    <div class="setup-title">Load Your Session</div>
+
+    <div>
+      <div class="setup-label">
+        Affirmation Audio Files
+        <span class="opt">— WAV or MP3 from app3.py, select all at once</span>
+      </div>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" multiple accept="audio/wav,audio/mpeg,audio/mp3,audio/ogg,.wav,.mp3,.ogg">
+        <div class="drop-icon">◎</div>
+        <div class="drop-title">Drop files here or tap to browse</div>
+        <div class="drop-hint">affirmation_0.wav · affirmation_1.wav · affirmation_2.wav …</div>
+      </div>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div>
+      <div class="setup-label">
+        Affirmation Texts
+        <span class="opt">— optional, one per line, matched by order</span>
+      </div>
+      <textarea class="texts-area" id="textsArea"
+        placeholder="I am calm, peaceful, and completely free.&#10;I breathe deeply and cleanly. My lungs are full of pure life.&#10;I am enough. Completely and unconditionally.&#10;…"></textarea>
+    </div>
+
+    <div class="setup-err" id="setupErr"></div>
+    <button class="begin-btn" id="beginBtn" disabled>Begin Session</button>
+  </div>
+
+  <!-- ── Session UI (hidden until files loaded) ── -->
+  <div class="session-ui" id="sessionUI">
+
+    <div class="subliminal-badge">
+      <div class="subliminal-dot"></div>
+      Subliminal Mode Active
+    </div>
+
+    <div class="orb-wrap">
+      <div class="orb-ring"></div>
+      <div class="orb-ring"></div>
+      <div class="orb-ring"></div>
+      <div class="orb-core" id="orbBtn">
+        <div class="play-icon" id="playIcon"></div>
+      </div>
+    </div>
+
+    <div class="affirmation-display">
+      <div class="affirmation-num" id="affNum" style="opacity:1;">Tap the orb to begin</div>
+      <div class="affirmation-text" id="affText" style="opacity:1;transform:none;font-style:normal;font-size:14px;color:var(--text-dim);">
+        Close your eyes. Breathe slowly. Let your mind rest.
+      </div>
+    </div>
+
+    <div class="subliminal-indicator" id="subIndicator">
+      <div class="sub-wave">
+        <div class="sub-bar"></div><div class="sub-bar"></div>
+        <div class="sub-bar"></div><div class="sub-bar"></div>
+        <div class="sub-bar"></div>
+      </div>
+      <span class="sub-label">Voice reaching subconscious</span>
+      <div class="sub-wave">
+        <div class="sub-bar"></div><div class="sub-bar"></div>
+        <div class="sub-bar"></div><div class="sub-bar"></div>
+        <div class="sub-bar"></div>
+      </div>
+    </div>
+
+    <div class="breathing" id="breathGuide">
+      <span class="breath-word" id="bw1">Inhale</span> &nbsp;·&nbsp;
+      <span class="breath-word" id="bw2">Hold</span> &nbsp;·&nbsp;
+      <span class="breath-word" id="bw3">Release</span>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="time-row">
+        <span id="timeElapsed">0:00</span>
+        <span id="timeDuration">—</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn" id="restartBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        Restart
+      </button>
+
+      <button class="ctrl-btn" id="loopBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M17 1l4 4-4 4"/>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+          <path d="M7 23l-4-4 4-4"/>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+        </svg>
+        Loop
+      </button>
+
+      <button class="ctrl-btn" id="loadNewBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" x2="12" y1="3" y2="15"/>
+        </svg>
+        Load
+      </button>
+    </div>
+
+    <!-- Volume Mix -->
+    <div class="volume-section">
+      <div class="vol-row">
+        <span class="vol-label">Ambient</span>
+        <input type="range" id="ambVolSlider" min="0" max="1" step="0.01" value="0.70">
+        <span class="vol-val" id="ambVolVal">70%</span>
+      </div>
+      <div class="vol-row">
+        <span class="vol-label">Voice</span>
+        <input type="range" id="voiceVolSlider" min="0" max="0.12" step="0.002" value="0.02">
+        <span class="vol-val" id="voiceVolVal">Ultra</span>
+      </div>
+    </div>
+
+    <div class="sub-note">
+      <strong>Subliminal Mix</strong><br>
+      Your Chatterbox voice plays at ~2% volume — beneath conscious resistance — while the theta tones guide your mind into deep receptivity. The beliefs install gently, below the threshold of resistance.
+    </div>
+
+    <div class="divider"></div>
+    <div class="counter">
+      Affirmation <span id="currNum">—</span> of <span id="totalNum">—</span>
+      &nbsp;·&nbsp; Loop <span id="loopNum">1</span>
+    </div>
+    <div class="status" id="statusMsg"></div>
+
+  </div><!-- /session-ui -->
+
+</div><!-- /container -->
+
+<script>
+// ─── Stars ───────────────────────────────────────────────────────────
+(function createStars() {
+  const c = document.getElementById('starsContainer');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 1.5 + 0.5;
+    s.style.cssText = `
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      width:${size}px;height:${size}px;
+      --dur:${3+Math.random()*6}s;
+      --brightness:${0.1+Math.random()*0.5};
+      animation-delay:${Math.random()*8}s;
+    `;
+    c.appendChild(s);
+  }
+})();
+
+// ─── State ───────────────────────────────────────────────────────────
+let audioCtx      = null;
+let ambGain       = null;      // ambient oscillator gain
+let voiceGain     = null;      // voice layer gain
+let oscillators   = [];
+
+let audioBuffers  = [];        // decoded AudioBuffer per affirmation
+let affTexts      = [];        // display text per affirmation
+let totalAff      = 0;
+let totalDurSecs  = 0;         // sum of affirmation durations
+
+let playing       = false;
+let loopEnabled   = false;
+let currentIndex  = 0;
+let currentLoop   = 1;
+let elapsed       = 0;
+let clockId       = null;
+let currentSource = null;      // active BufferSourceNode
+let pauseTimer    = null;
+
+const PAUSE_MS    = 3500;      // gap between affirmations (ms)
+let   voiceVol    = 0.02;      // ~2% — subliminal level
+let   breathId    = null;
+
+// ─── DOM refs ────────────────────────────────────────────────────────
+const setupPanel   = document.getElementById('setupPanel');
+const sessionUI    = document.getElementById('sessionUI');
+const fileInput    = document.getElementById('fileInput');
+const dropZone     = document.getElementById('dropZone');
+const fileList     = document.getElementById('fileList');
+const textsArea    = document.getElementById('textsArea');
+const beginBtn     = document.getElementById('beginBtn');
+const setupErr     = document.getElementById('setupErr');
+const orbBtn       = document.getElementById('orbBtn');
+const affText      = document.getElementById('affText');
+const affNum       = document.getElementById('affNum');
+const progressFill = document.getElementById('progressFill');
+const timeElapsed  = document.getElementById('timeElapsed');
+const timeDuration = document.getElementById('timeDuration');
+const statusMsg    = document.getElementById('statusMsg');
+const currNum      = document.getElementById('currNum');
+const totalNum     = document.getElementById('totalNum');
+const loopNum      = document.getElementById('loopNum');
+const restartBtn   = document.getElementById('restartBtn');
+const loopBtn      = document.getElementById('loopBtn');
+const loadNewBtn   = document.getElementById('loadNewBtn');
+const ambVolSlider = document.getElementById('ambVolSlider');
+const voiceVolSlider = document.getElementById('voiceVolSlider');
+const ambVolVal    = document.getElementById('ambVolVal');
+const voiceVolVal  = document.getElementById('voiceVolVal');
+const bw1 = document.getElementById('bw1');
+const bw2 = document.getElementById('bw2');
+const bw3 = document.getElementById('bw3');
+const subIndicator = document.getElementById('subIndicator');
+const completeGlow = document.getElementById('completeGlow');
+
+// ─── File Loading ────────────────────────────────────────────────────
+let pendingFiles = [];
+
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+  // Sort by filename so affirmation_0 → affirmation_1 → …
+  pendingFiles = Array.from(files).sort((a, b) => {
+    const numA = parseInt((a.name.match(/\d+/) || [Infinity])[0]);
+    const numB = parseInt((b.name.match(/\d+/) || [Infinity])[0]);
+    return numA - numB;
+  });
+
+  fileList.innerHTML = '';
+  setupErr.textContent = '';
+
+  if (pendingFiles.length === 0) return;
+
+  pendingFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.id = `fi-${i}`;
+    item.innerHTML = `
+      <div class="file-num">${i + 1}</div>
+      <div class="file-name">${f.name}</div>
+      <div class="file-dur" id="fid-${i}">…</div>
+      <div class="file-ok" style="background:var(--text-faint)" id="fok-${i}"></div>
+    `;
+    fileList.appendChild(item);
+
+    // Probe duration via temp Audio element
+    const url = URL.createObjectURL(f);
+    const tmp = new Audio(url);
+    tmp.addEventListener('loadedmetadata', () => {
+      const dur = tmp.duration;
+      document.getElementById(`fid-${i}`).textContent =
+        isFinite(dur) ? `${dur.toFixed(1)}s` : '—';
+      document.getElementById(`fok-${i}`).style.background = 'var(--indigo)';
+      URL.revokeObjectURL(url);
+    });
+  });
+
+  beginBtn.disabled = false;
+}
+
+// ─── Audio Context & Ambient Setup ───────────────────────────────────
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // ── Ambient layer ────────────────────────────────────────────────
+  // Theta binaural (7 Hz) + drone undertones — calm receptive state
+  ambGain = audioCtx.createGain();
+  ambGain.gain.setValueAtTime(0, audioCtx.currentTime);
+  ambGain.connect(audioCtx.destination);
+
+  const freqPairs = [
+    { base: 130.8, beat: 7   },  // C3 + 7Hz theta beat
+    { base: 196.0, beat: 0   },  // G3 drone
+    { base: 261.6, beat: 0   },  // C4 drone
+    { base:  65.4, beat: 0   },  // C2 sub-bass drone (warmth)
+  ];
+
+  freqPairs.forEach(({ base, beat }, i) => {
+    const oscL   = audioCtx.createOscillator();
+    const oscR   = audioCtx.createOscillator();
+    const gL     = audioCtx.createGain();
+    const gR     = audioCtx.createGain();
+    const merger = audioCtx.createChannelMerger(2);
+    const vol    = [0.13, 0.07, 0.045, 0.025][i];
+
+    oscL.type = oscR.type = 'sine';
+    oscL.frequency.value = base;
+    oscR.frequency.value = base + beat;
+    gL.gain.value = gR.gain.value = vol;
+
+    oscL.connect(gL); oscR.connect(gR);
+    gL.connect(merger, 0, 0); gR.connect(merger, 0, 1);
+    merger.connect(ambGain);
+
+    oscL.start(); oscR.start();
+    oscillators.push(oscL, oscR);
+  });
+
+  // ── Voice layer ──────────────────────────────────────────────────
+  voiceGain = audioCtx.createGain();
+  voiceGain.gain.setValueAtTime(voiceVol, audioCtx.currentTime);
+  voiceGain.connect(audioCtx.destination);
+}
+
+function ambientFadeIn() {
+  if (!ambGain) return;
+  const v = parseFloat(ambVolSlider.value);
+  ambGain.gain.setTargetAtTime(v * 0.32, audioCtx.currentTime, 2.5);
+}
+
+function ambientFadeOut() {
+  if (!ambGain) return;
+  ambGain.gain.setTargetAtTime(0, audioCtx.currentTime, 1.5);
+}
+
+// ─── Decode all files into AudioBuffers ──────────────────────────────
+async function decodeAllFiles(files) {
+  audioBuffers = [];
+  totalDurSecs = 0;
+  for (const f of files) {
+    const ab = await f.arrayBuffer();
+    const buf = await audioCtx.decodeAudioData(ab);
+    audioBuffers.push(buf);
+    totalDurSecs += buf.duration + (PAUSE_MS / 1000);
+  }
+}
+
+// ─── Play a specific affirmation buffer ──────────────────────────────
+function playBuffer(index, onEnded) {
+  if (currentSource) {
+    currentSource.onended = null; // detach before stopping
+    try { currentSource.stop(); } catch(e) {}
+    currentSource = null;
+  }
+
+  if (!audioBuffers[index]) return;
+  const src = audioCtx.createBufferSource();
+  src.buffer = audioBuffers[index];
+  src.connect(voiceGain);
+  src.start();
+  src.onended = onEnded;
+  currentSource = src;
+}
+
+// ─── Session Logic ────────────────────────────────────────────────────
+function showAff(idx) {
+  affText.classList.remove('visible');
+  affNum.classList.remove('visible');
+
+  setTimeout(() => {
+    const txt = affTexts[idx] || `Affirmation ${idx + 1}`;
+    affText.style.fontStyle  = 'italic';
+    affText.style.fontSize   = '';
+    affText.style.color      = '';
+    affText.textContent      = txt;
+    affNum.textContent       = `${idx + 1} of ${totalAff}`;
+    affText.classList.add('visible');
+    affNum.classList.add('visible');
+    currNum.textContent = idx + 1;
+  }, 700);
+}
+
+function scheduleNext() {
+  if (!playing) return;
+  pauseTimer = setTimeout(() => {
+    if (!playing) return;
+    currentIndex++;
+    if (currentIndex >= totalAff) {
+      if (loopEnabled) {
+        currentLoop++;
+        loopNum.textContent = currentLoop;
+        currentIndex = 0;
+        playAffirmation(currentIndex);
+      } else {
+        endSession();
+      }
+      return;
+    }
+    playAffirmation(currentIndex);
+  }, PAUSE_MS);
+}
+
+function playAffirmation(idx) {
+  showAff(idx);
+  playBuffer(idx, () => {
+    if (playing) scheduleNext();
+  });
+}
+
+function startClock() {
+  clockId = setInterval(() => {
+    elapsed++;
+    const pct = Math.min((elapsed / (totalDurSecs * (loopEnabled ? 3 : 1))) * 100, 100);
+    progressFill.style.width = pct + '%';
+    timeElapsed.textContent = fmtTime(elapsed);
+  }, 1000);
+}
+
+function startBreathing() {
+  const phases = [bw1, bw2, bw3];
+  phases.forEach(el => el.classList.remove('active'));
+  phases[0].classList.add('active');
+  let p = 0;
+  breathId = setInterval(() => {
+    phases[p].classList.remove('active');
+    p = (p + 1) % 3;
+    phases[p].classList.add('active');
+  }, 4000);
+}
+
+function stopBreathing() {
+  clearInterval(breathId);
+  [bw1, bw2, bw3].forEach(el => el.classList.remove('active'));
+}
+
+function startSession() {
+  playing = true;
+  setOrbPause();
+  ambientFadeIn();
+  voiceGain.gain.setValueAtTime(voiceVol, audioCtx.currentTime);
+  subIndicator.classList.add('visible');
+  startBreathing();
+  startClock();
+  playAffirmation(currentIndex);
+  statusMsg.textContent = 'Subliminal voice flowing · Stay relaxed';
+  statusMsg.classList.add('visible');
+}
+
+function pauseSession() {
+  playing = false;
+  clearTimeout(pauseTimer);
+  clearInterval(clockId);
+  stopBreathing();
+  ambientFadeOut();
+  if (currentSource) {
+    try { currentSource.stop(); } catch(e) {}
+    currentSource = null;
+  }
+  subIndicator.classList.remove('visible');
+  setOrbPlay();
+  statusMsg.textContent = 'Paused · Return when ready';
+}
+
+function resumeSession() {
+  playing = true;
+  setOrbPause();
+  ambientFadeIn();
+  voiceGain.gain.setValueAtTime(voiceVol, audioCtx.currentTime);
+  subIndicator.classList.add('visible');
+  startBreathing();
+  startClock();
+  playAffirmation(currentIndex); // replay current one from start
+  statusMsg.textContent = 'Subliminal voice flowing · Stay relaxed';
+}
+
+function endSession() {
+  clearInterval(clockId);
+  clearTimeout(pauseTimer);
+  stopBreathing();
+  ambientFadeOut();
+  if (currentSource) {
+    try { currentSource.stop(); } catch(e) {}
+    currentSource = null;
+  }
+  playing = false;
+  subIndicator.classList.remove('visible');
+  completeGlow.classList.add('active');
+  setOrbPlay();
+
+  affText.classList.remove('visible');
+  affNum.classList.remove('visible');
+  setTimeout(() => {
+    affText.style.fontStyle = 'normal';
+    affText.style.fontSize  = '14px';
+    affText.style.color     = 'var(--text-dim)';
+    affText.textContent     = 'Session complete. It is done. It is already real.';
+    affNum.textContent      = '✦ Complete';
+    affText.classList.add('visible');
+    affNum.classList.add('visible');
+  }, 600);
+
+  progressFill.style.width = '100%';
+  statusMsg.textContent    = '✦ Your subconscious has received all affirmations ✦';
+  currNum.textContent      = totalAff;
+}
+
+function resetState() {
+  clearInterval(clockId);
+  clearTimeout(pauseTimer);
+  stopBreathing();
+  if (currentSource) {
+    currentSource.onended = null;
+    try { currentSource.stop(); } catch(e) {}
+    currentSource = null;
+  }
+  playing      = false;
+  currentIndex = 0;
+  currentLoop  = 1;
+  elapsed      = 0;
+  progressFill.style.width   = '0%';
+  timeElapsed.textContent    = '0:00';
+  loopNum.textContent        = '1';
+  currNum.textContent        = '—';
+  subIndicator.classList.remove('visible');
+  completeGlow.classList.remove('active');
+  statusMsg.classList.remove('visible');
+  setOrbPlay();
+}
+
+// ─── Begin — fires when user presses Begin Session ────────────────────
+beginBtn.addEventListener('click', async () => {
+  if (pendingFiles.length === 0) { setupErr.textContent = 'Please select at least one audio file.'; return; }
+  beginBtn.disabled   = true;
+  beginBtn.textContent = 'Loading…';
+  setupErr.textContent = '';
+
+  // Parse affirmation texts
+  const lines = textsArea.value.trim().split('\n').map(l => l.trim()).filter(Boolean);
+  affTexts = lines;
+  totalAff = pendingFiles.length;
+  totalNum.textContent = totalAff;
+  timeDuration.textContent = fmtTime(Math.round(
+    pendingFiles.length * 8 // rough estimate before decode
+  ));
+
+  initAudio();
+  try {
+    await decodeAllFiles(pendingFiles);
+  } catch(e) {
+    setupErr.textContent = 'Could not decode audio: ' + e.message;
+    beginBtn.disabled = false;
+    beginBtn.textContent = 'Begin Session';
+    return;
+  }
+
+  timeDuration.textContent = fmtTime(Math.round(totalDurSecs));
+
+  // Switch views
+  setupPanel.classList.add('hidden');
+  sessionUI.classList.add('visible');
+});
+
+// ─── Orb click ────────────────────────────────────────────────────────
+orbBtn.addEventListener('click', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if (!playing && elapsed === 0) startSession();
+  else if (playing) pauseSession();
+  else resumeSession();
+});
+
+// ─── Restart ──────────────────────────────────────────────────────────
+restartBtn.addEventListener('click', () => {
+  ambientFadeOut();
+  resetState();
+  affText.classList.remove('visible');
+  affNum.classList.remove('visible');
+  setTimeout(() => {
+    affText.style.fontStyle = 'normal';
+    affText.style.fontSize  = '14px';
+    affText.style.color     = 'var(--text-dim)';
+    affText.textContent     = 'Close your eyes. Breathe slowly. Let your mind rest.';
+    affNum.textContent      = 'Ready';
+    affText.classList.add('visible');
+    affNum.classList.add('visible');
+  }, 400);
+});
+
+// ─── Loop toggle ──────────────────────────────────────────────────────
+loopBtn.addEventListener('click', () => {
+  loopEnabled = !loopEnabled;
+  loopBtn.style.color = loopEnabled ? 'var(--indigo)' : '';
+});
+
+// ─── Load New (back to setup) ─────────────────────────────────────────
+loadNewBtn.addEventListener('click', () => {
+  ambientFadeOut();
+  resetState();
+  sessionUI.classList.remove('visible');
+  setupPanel.classList.remove('hidden');
+  fileList.innerHTML = '';
+  textsArea.value    = '';
+  pendingFiles       = [];
+  audioBuffers       = [];
+  beginBtn.disabled  = true;
+  beginBtn.textContent = 'Begin Session';
+  fileInput.value    = '';
+  affText.textContent     = 'Close your eyes. Breathe slowly. Let your mind rest.';
+  affNum.textContent      = 'Tap the orb to begin';
+});
+
+// ─── Volume sliders ───────────────────────────────────────────────────
+ambVolSlider.addEventListener('input', () => {
+  const v = parseFloat(ambVolSlider.value);
+  if (ambGain && playing) ambGain.gain.setTargetAtTime(v * 0.32, audioCtx.currentTime, 0.3);
+  ambVolVal.textContent = Math.round(v * 100) + '%';
+});
+
+voiceVolSlider.addEventListener('input', () => {
+  voiceVol = parseFloat(voiceVolSlider.value);
+  if (voiceGain) voiceGain.gain.setValueAtTime(voiceVol, audioCtx.currentTime);
+  if      (voiceVol <= 0.008) voiceVolVal.textContent = 'Ghost';
+  else if (voiceVol <= 0.025) voiceVolVal.textContent = 'Ultra';
+  else if (voiceVol <= 0.06)  voiceVolVal.textContent = 'Deep';
+  else                        voiceVolVal.textContent  = Math.round(voiceVol * 100) + '%';
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s % 60)).padStart(2,'0')}`;
+}
+
+function setOrbPause() {
+  orbBtn.innerHTML = '';
+  const pd = document.createElement('div');
+  pd.className = 'pause-icon';
+  pd.innerHTML = '<div class="pause-bar"></div><div class="pause-bar"></div>';
+  orbBtn.appendChild(pd);
+  orbBtn.classList.add('playing');
+}
+
+function setOrbPlay() {
+  orbBtn.innerHTML = '';
+  const pi = document.createElement('div');
+  pi.className = 'play-icon';
+  orbBtn.appendChild(pi);
+  orbBtn.classList.remove('playing');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────
+totalNum.textContent = '—';
+affText.classList.add('visible');
+affNum.classList.add('visible');
+</script>
+</body>
+</html>

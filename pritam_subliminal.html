@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pritam · Subliminal Affirmations</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #07090b;
+    --surface: #0d1014;
+    --indigo: #5c6bc0;
+    --indigo-dim: #3d4785;
+    --rose: #c06b8a;
+    --rose-dim: #7a4459;
+    --text: #ddd8f0;
+    --text-dim: #5a5570;
+    --text-faint: #2e2a40;
+    --glow: rgba(92, 107, 192, 0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    overflow-x: hidden;
+  }
+
+  /* Starfield background */
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--dur) ease-in-out infinite;
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: var(--brightness); }
+  }
+
+  /* Deep glow background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 45% at 15% 25%, rgba(92,107,192,0.07) 0%, transparent 65%),
+      radial-gradient(ellipse 45% 55% at 85% 75%, rgba(192,107,138,0.06) 0%, transparent 65%),
+      radial-gradient(ellipse 30% 40% at 50% 50%, rgba(92,107,192,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+  }
+
+  .eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 9px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    margin-bottom: 14px;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 300;
+    font-size: clamp(24px, 5vw, 34px);
+    color: var(--text);
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+  }
+
+  .header h1 em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--indigo), var(--rose));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subliminal badge */
+  .subliminal-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(92,107,192,0.08);
+    border: 1px solid rgba(92,107,192,0.15);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+  }
+
+  .subliminal-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--indigo);
+    animation: dot-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* Orb */
+  .orb-wrap {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(92,107,192,0.12);
+    animation: ring-pulse 5s ease-in-out infinite;
+  }
+  .orb-ring:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+  .orb-ring:nth-child(2) { width: 165px; height: 165px; animation-delay: 1s; border-color: rgba(192,107,138,0.1); }
+  .orb-ring:nth-child(3) { width: 130px; height: 130px; animation-delay: 2s; border-color: rgba(92,107,192,0.18); }
+
+  @keyframes ring-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.03); opacity: 1; }
+  }
+
+  .orb-core {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%,
+      rgba(92,107,192,0.25),
+      rgba(192,107,138,0.12),
+      transparent 80%
+    );
+    border: 1px solid rgba(92,107,192,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    position: relative;
+    z-index: 2;
+    user-select: none;
+  }
+
+  .orb-core:hover {
+    border-color: rgba(92,107,192,0.5);
+    box-shadow: 0 0 30px rgba(92,107,192,0.15);
+  }
+
+  .orb-core.playing {
+    animation: orb-breathe 5s ease-in-out infinite;
+    border-color: rgba(92,107,192,0.4);
+  }
+
+  @keyframes orb-breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(92,107,192,0.1); }
+    50% { transform: scale(1.07); box-shadow: 0 0 50px rgba(92,107,192,0.25), 0 0 80px rgba(192,107,138,0.1); }
+  }
+
+  .play-icon {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 11px 0 11px 19px;
+    border-color: transparent transparent transparent rgba(200,200,255,0.8);
+    margin-left: 5px;
+  }
+
+  .pause-icon { display: flex; gap: 6px; }
+  .pause-bar { width: 4px; height: 20px; background: rgba(200,200,255,0.8); border-radius: 2px; }
+
+  /* Affirmation */
+  .affirmation-display {
+    text-align: center;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .affirmation-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(17px, 3.2vw, 22px);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1.4s ease, transform 1.4s ease;
+    letter-spacing: 0.2px;
+  }
+
+  .affirmation-text.visible { opacity: 1; transform: translateY(0); }
+
+  .affirmation-cat {
+    font-size: 8px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    opacity: 0;
+    transition: opacity 1s ease 0.4s;
+  }
+  .affirmation-cat.visible { opacity: 1; }
+
+  /* Subliminal indicator */
+  .subliminal-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .subliminal-indicator.visible { opacity: 1; }
+
+  .sub-wave {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 16px;
+  }
+
+  .sub-bar {
+    width: 2px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, var(--indigo), var(--rose));
+    animation: sub-wave-anim 1.2s ease-in-out infinite;
+    transform-origin: bottom;
+  }
+  .sub-bar:nth-child(1) { height: 4px; animation-delay: 0s; }
+  .sub-bar:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+  .sub-bar:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+  .sub-bar:nth-child(4) { height: 8px; animation-delay: 0.45s; }
+  .sub-bar:nth-child(5) { height: 4px; animation-delay: 0.6s; }
+
+  @keyframes sub-wave-anim {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  .sub-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+  }
+
+  /* Progress */
+  .progress-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .progress-bar-wrap {
+    width: 100%;
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    position: relative;
+    cursor: pointer;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--indigo-dim), var(--indigo), var(--rose));
+    width: 0%;
+    transition: width 0.5s linear;
+  }
+
+  .progress-bar-wrap::after {
+    content: '';
+    position: absolute;
+    top: -8px; left: 0; right: 0; height: 17px;
+  }
+
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .ctrl-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    transition: color 0.3s;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ctrl-btn:hover { color: var(--indigo); }
+  .ctrl-btn svg { width: 17px; height: 17px; }
+
+  .speed-wrap { display: flex; align-items: center; gap: 6px; }
+  .speed-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+
+  .speed-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.07);
+    color: var(--text-dim);
+    font-family: 'Jost', sans-serif;
+    font-size: 9px;
+    padding: 4px 9px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+    font-weight: 300;
+  }
+  .speed-btn.active { border-color: var(--indigo-dim); color: var(--indigo); }
+
+  /* Volume section */
+  .volume-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .vol-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    width: 60px;
+    flex-shrink: 0;
+  }
+
+  .vol-val {
+    font-size: 9px;
+    color: var(--indigo-dim);
+    letter-spacing: 1px;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--indigo);
+    cursor: pointer;
+  }
+
+  /* Subliminal voice note */
+  .sub-note {
+    background: rgba(92,107,192,0.06);
+    border: 1px solid rgba(92,107,192,0.12);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.7;
+    max-width: 340px;
+  }
+
+  .sub-note strong {
+    color: var(--indigo-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* Breathing */
+  .breathing {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: center;
+    min-height: 12px;
+  }
+
+  .breath-word { transition: color 0.6s, opacity 0.6s; opacity: 0.3; }
+  .breath-word.active { color: var(--indigo); opacity: 1; }
+
+  /* Counter & status */
+  .divider {
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--indigo-dim), transparent);
+  }
+
+  .counter {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .counter span { color: var(--indigo-dim); }
+
+  .status {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--rose-dim);
+    text-align: center;
+    min-height: 14px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .status.visible { opacity: 1; }
+
+  /* Session complete */
+  .complete-glow {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 50% 60% at 50% 50%, rgba(92,107,192,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 2s;
+  }
+  .complete-glow.active { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" id="starsContainer"></div>
+<div class="complete-glow" id="completeGlow"></div>
+
+<div class="container">
+
+  <div class="header">
+    <p class="eyebrow">Subliminal · Deep Mind · 10 Minutes</p>
+    <h1>You Are Already<br><em>Everything You Desire</em></h1>
+  </div>
+
+  <div class="subliminal-badge">
+    <div class="subliminal-dot"></div>
+    Subliminal Mode Active
+  </div>
+
+  <div class="orb-wrap">
+    <div class="orb-ring"></div>
+    <div class="orb-ring"></div>
+    <div class="orb-ring"></div>
+    <div class="orb-core" id="orbBtn">
+      <div class="play-icon" id="playIcon"></div>
+    </div>
+  </div>
+
+  <div class="affirmation-display">
+    <div class="affirmation-cat" id="affCat" style="opacity:1;">Tap the orb to begin</div>
+    <div class="affirmation-text" id="affText" style="opacity:1;transform:none;font-style:normal;font-size:14px;color:var(--text-dim);">
+      Close your eyes. Breathe slowly. Let your mind rest.
+    </div>
+  </div>
+
+  <div class="subliminal-indicator" id="subIndicator">
+    <div class="sub-wave">
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+    </div>
+    <span class="sub-label">Voice reaching subconscious</span>
+    <div class="sub-wave">
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+      <div class="sub-bar"></div>
+    </div>
+  </div>
+
+  <div class="breathing" id="breathGuide">
+    <span class="breath-word" id="bw1">Inhale</span> &nbsp;·&nbsp;
+    <span class="breath-word" id="bw2">Hold</span> &nbsp;·&nbsp;
+    <span class="breath-word" id="bw3">Release</span>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="time-row">
+      <span id="timeElapsed">0:00</span>
+      <span>10:00</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="restartBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+      Restart
+    </button>
+
+    <div class="speed-wrap">
+      <span class="speed-label">Pace</span>
+      <button class="speed-btn active" data-speed="slow">Slow</button>
+      <button class="speed-btn" data-speed="medium">Med</button>
+      <button class="speed-btn" data-speed="fast">Fast</button>
+    </div>
+
+    <button class="ctrl-btn" id="shuffleBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+      </svg>
+      Shuffle
+    </button>
+  </div>
+
+  <div class="volume-section">
+    <div class="vol-row">
+      <span class="vol-label">Ambient</span>
+      <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.7">
+      <span class="vol-val" id="volVal">70%</span>
+    </div>
+    <div class="vol-row">
+      <span class="vol-label">Subliminal</span>
+      <input type="range" id="subVolSlider" min="0" max="0.08" step="0.002" value="0.02">
+      <span class="vol-val" id="subVolVal">Ultra</span>
+    </div>
+  </div>
+
+  <div class="sub-note">
+    <strong>How this works</strong><br>
+    The voice is set below conscious hearing — audible only to your subconscious mind. Your resistance stays bypassed. The beliefs install directly and gently, while you relax.
+  </div>
+
+  <div class="divider"></div>
+  <div class="counter">Affirmation <span id="currNum">—</span> of <span id="totalNum">—</span></div>
+  <div class="status" id="statusMsg"></div>
+
+</div>
+
+<script>
+// ─── Affirmations ──────────────────────────────────────────────────────────
+const affirmations = [
+  // Inner Peace & Freedom
+  { text: "I am calm, peaceful, happy, and completely free.", cat: "Peace & Freedom" },
+  { text: "A deep stillness lives at my core. Nothing disturbs it.", cat: "Peace & Freedom" },
+  { text: "I am completely relaxed — in my body, my mind, and my life.", cat: "Peace & Freedom" },
+  { text: "I move through life with ease, lightness, and total freedom.", cat: "Peace & Freedom" },
+  { text: "Peace is not something I seek. Peace is who I am.", cat: "Peace & Freedom" },
+  { text: "Joy flows through me effortlessly. Happiness is my natural state.", cat: "Peace & Freedom" },
+  { text: "I am free. I have always been free.", cat: "Peace & Freedom" },
+  { text: "There is nothing to force and nothing to fix. I am already whole.", cat: "Peace & Freedom" },
+  { text: "I release all tension now. My mind is soft and still.", cat: "Peace & Freedom" },
+  { text: "I feel completely at ease. Everything is working out beautifully.", cat: "Peace & Freedom" },
+
+  // Non-Smoker Identity
+  { text: "I have never smoked. My body is completely clean and free.", cat: "Non-Smoker" },
+  { text: "I hate cigarettes. They have no power over me, none at all.", cat: "Non-Smoker" },
+  { text: "The smell of smoke repels me instantly. I am free from it.", cat: "Non-Smoker" },
+  { text: "I breathe deeply and cleanly. My lungs are full of pure life.", cat: "Non-Smoker" },
+  { text: "Cigarettes are not part of who I am. They never were.", cat: "Non-Smoker" },
+  { text: "I am a non-smoker completely. That truth is settled inside me.", cat: "Non-Smoker" },
+  { text: "My body is pure. I choose clean air and vibrant health.", cat: "Non-Smoker" },
+
+  // Physical Self & Appearance
+  { text: "I am five feet ten — tall, strong, and powerfully at ease in my body.", cat: "Physical Self" },
+  { text: "I am super handsome. I know it, I feel it, I own it.", cat: "Physical Self" },
+  { text: "My presence is magnetic. I walk into any room with natural confidence.", cat: "Physical Self" },
+  { text: "I carry myself with effortless grace. I look good and I know it.", cat: "Physical Self" },
+  { text: "My body is strong, healthy, and exactly as it should be.", cat: "Physical Self" },
+  { text: "I am deeply comfortable in my own skin. I radiate ease and power.", cat: "Physical Self" },
+
+  // Attraction — Spanish Women
+  { text: "Beautiful Spanish girls are naturally and powerfully attracted to me.", cat: "Attraction" },
+  { text: "Gorgeous Spanish women seek me out. They love my company.", cat: "Attraction" },
+  { text: "I attract beautiful, passionate Spanish women effortlessly and joyfully.", cat: "Attraction" },
+  { text: "Spanish girls kiss me and love to spend time with me. This is my reality.", cat: "Attraction" },
+  { text: "Many beautiful Spanish women are drawn to me. It happens naturally.", cat: "Attraction" },
+  { text: "I am irresistible to beautiful women. They feel it the moment they see me.", cat: "Attraction" },
+  { text: "I receive the love and affection of many gorgeous women with total ease.", cat: "Attraction" },
+  { text: "Beautiful Spanish women are excited by my presence. I welcome their warmth.", cat: "Attraction" },
+
+  // Self-Worth & Wholeness
+  { text: "I am enough. Completely and unconditionally.", cat: "Self-Worth" },
+  { text: "I am worthy of every beautiful thing in my life.", cat: "Self-Worth" },
+  { text: "I love myself fully. I am on my own side, always.", cat: "Self-Worth" },
+  { text: "Everything I desire is already mine. It is already done.", cat: "Self-Worth" },
+  { text: "I am the version of myself who has everything he wants. Right now.", cat: "Self-Worth" },
+  { text: "I move through the world as one who has already arrived.", cat: "Self-Worth" },
+];
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let playing = false;
+let currentIndex = 0;
+let elapsed = 0;
+let totalDuration = 600;
+let intervalId = null;
+let affIntervalId = null;
+let shuffled = false;
+let speed = 'slow';
+let order = [...affirmations.keys()];
+let breathId = null;
+const speedMap = { slow: 22000, medium: 14000, fast: 8000 };
+let subVolume = 0.02; // Ultra low — below conscious threshold
+
+// ─── Elements ──────────────────────────────────────────────────────────────
+const orbBtn = document.getElementById('orbBtn');
+const affText = document.getElementById('affText');
+const affCat = document.getElementById('affCat');
+const progressFill = document.getElementById('progressFill');
+const timeElapsed = document.getElementById('timeElapsed');
+const statusMsg = document.getElementById('statusMsg');
+const currNum = document.getElementById('currNum');
+const totalNum = document.getElementById('totalNum');
+const restartBtn = document.getElementById('restartBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const volSlider = document.getElementById('volSlider');
+const subVolSlider = document.getElementById('subVolSlider');
+const volVal = document.getElementById('volVal');
+const subVolVal = document.getElementById('subVolVal');
+const bw1 = document.getElementById('bw1');
+const bw2 = document.getElementById('bw2');
+const bw3 = document.getElementById('bw3');
+const subIndicator = document.getElementById('subIndicator');
+const completeGlow = document.getElementById('completeGlow');
+
+// ─── Stars ─────────────────────────────────────────────────────────────────
+(function createStars() {
+  const container = document.getElementById('starsContainer');
+  for (let i = 0; i < 120; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 1.5 + 0.5;
+    star.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      width: ${size}px;
+      height: ${size}px;
+      --dur: ${3 + Math.random() * 6}s;
+      --brightness: ${0.1 + Math.random() * 0.5};
+      animation-delay: ${Math.random() * 8}s;
+    `;
+    container.appendChild(star);
+  }
+})();
+
+// ─── Audio ─────────────────────────────────────────────────────────────────
+let audioCtx = null;
+let gainNode = null;
+let oscillators = [];
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  gainNode = audioCtx.createGain();
+  gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+  gainNode.connect(audioCtx.destination);
+
+  // Soft theta-range ambient: calming 7Hz binaural-style + undertones
+  const freqPairs = [
+    { base: 130.8, beat: 7 },   // C3 + theta beat
+    { base: 196.0, beat: 0 },   // G3 drone
+    { base: 261.6, beat: 0 },   // C4 drone
+  ];
+
+  freqPairs.forEach(({ base, beat }, i) => {
+    const oscL = audioCtx.createOscillator();
+    const oscR = audioCtx.createOscillator();
+    const gainL = audioCtx.createGain();
+    const gainR = audioCtx.createGain();
+    const merger = audioCtx.createChannelMerger(2);
+    const vol = i === 0 ? 0.14 : i === 1 ? 0.08 : 0.05;
+
+    oscL.type = 'sine';
+    oscR.type = 'sine';
+    oscL.frequency.value = base;
+    oscR.frequency.value = base + beat;
+
+    gainL.gain.value = vol;
+    gainR.gain.value = vol;
+
+    oscL.connect(gainL);
+    oscR.connect(gainR);
+    gainL.connect(merger, 0, 0);
+    gainR.connect(merger, 0, 1);
+    merger.connect(gainNode);
+
+    oscL.start();
+    oscR.start();
+    oscillators.push(oscL, oscR);
+  });
+}
+
+function fadeIn() {
+  if (!gainNode) return;
+  gainNode.gain.setTargetAtTime(parseFloat(volSlider.value) * 0.35, audioCtx.currentTime, 2.5);
+}
+
+function fadeOut() {
+  if (!gainNode) return;
+  gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 1.5);
+}
+
+// ─── Speech (Subliminal) ───────────────────────────────────────────────────
+const speechAvailable = 'speechSynthesis' in window;
+let voicesLoaded = false;
+
+function getPreferredVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  // Prefer natural-sounding, calm female/male voices
+  const preferred = voices.find(v =>
+    v.name.includes('Samantha') || // macOS natural
+    v.name.includes('Karen') ||
+    v.name.includes('Daniel') ||
+    v.name.includes('Alex') ||
+    v.name.includes('Google UK English Female') ||
+    v.name.includes('Google US English') ||
+    (v.lang === 'en-US' && v.localService)
+  );
+  return preferred || voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0];
+}
+
+function speak(text) {
+  if (!speechAvailable) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 0.80;      // Slow, meditative pace
+    utt.pitch = 0.85;     // Slightly lower = calmer, more penetrating
+    utt.volume = subVolume; // Ultra low — subliminal level
+    const voice = getPreferredVoice();
+    if (voice) utt.voice = voice;
+    window.speechSynthesis.speak(utt);
+  } catch(e) {}
+}
+
+// Load voices
+if (speechAvailable) {
+  try {
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.getVoices();
+      voicesLoaded = true;
+    };
+  } catch(e) {}
+}
+
+// ─── Session Logic ─────────────────────────────────────────────────────────
+function showAffirmation(idx) {
+  const aff = affirmations[order[idx]];
+  affText.classList.remove('visible');
+  affCat.classList.remove('visible');
+
+  setTimeout(() => {
+    affText.style.fontStyle = 'italic';
+    affText.style.fontSize = '';
+    affText.style.color = '';
+    affText.textContent = aff.text;
+    affCat.textContent = aff.cat;
+    affText.classList.add('visible');
+    affCat.classList.add('visible');
+    currNum.textContent = idx + 1;
+    speak(aff.text);
+  }, 700);
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  return `${m}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+}
+
+function setOrbPause() {
+  while (orbBtn.firstChild) orbBtn.removeChild(orbBtn.firstChild);
+  const pd = document.createElement('div');
+  pd.className = 'pause-icon';
+  pd.innerHTML = '<div class="pause-bar"></div><div class="pause-bar"></div>';
+  orbBtn.appendChild(pd);
+  orbBtn.classList.add('playing');
+}
+
+function setOrbPlay() {
+  while (orbBtn.firstChild) orbBtn.removeChild(orbBtn.firstChild);
+  const pi = document.createElement('div');
+  pi.className = 'play-icon';
+  orbBtn.appendChild(pi);
+  orbBtn.classList.remove('playing');
+}
+
+function startBreathing() {
+  const phases = [bw1, bw2, bw3];
+  phases.forEach(el => el.classList.remove('active'));
+  phases[0].classList.add('active');
+  let p = 0;
+  breathId = setInterval(() => {
+    phases[p].classList.remove('active');
+    p = (p + 1) % 3;
+    phases[p].classList.add('active');
+  }, speed === 'slow' ? 4500 : speed === 'medium' ? 3500 : 2500);
+}
+
+function stopBreathing() {
+  clearInterval(breathId);
+  [bw1, bw2, bw3].forEach(el => el.classList.remove('active'));
+}
+
+function scheduleAffirmations() {
+  const delay = speedMap[speed];
+  affIntervalId = setInterval(() => {
+    currentIndex = (currentIndex + 1) % affirmations.length;
+    showAffirmation(currentIndex);
+  }, delay);
+}
+
+function startSession() {
+  initAudio();
+  playing = true;
+  setOrbPause();
+  fadeIn();
+  showAffirmation(currentIndex);
+  startBreathing();
+  scheduleAffirmations();
+  subIndicator.classList.add('visible');
+
+  intervalId = setInterval(() => {
+    elapsed++;
+    progressFill.style.width = `${(elapsed / totalDuration) * 100}%`;
+    timeElapsed.textContent = formatTime(elapsed);
+    if (elapsed >= totalDuration) endSession();
+  }, 1000);
+
+  statusMsg.textContent = 'Subliminal affirmations flowing · Stay relaxed';
+  statusMsg.classList.add('visible');
+  totalNum.textContent = affirmations.length;
+}
+
+function pauseSession() {
+  playing = false;
+  clearInterval(intervalId);
+  clearInterval(affIntervalId);
+  stopBreathing();
+  fadeOut();
+  if (speechAvailable) window.speechSynthesis.cancel();
+  subIndicator.classList.remove('visible');
+  setOrbPlay();
+  statusMsg.textContent = 'Paused · Return when ready';
+}
+
+function resumeSession() {
+  playing = true;
+  setOrbPause();
+  fadeIn();
+  showAffirmation(currentIndex);
+  startBreathing();
+  scheduleAffirmations();
+  subIndicator.classList.add('visible');
+
+  intervalId = setInterval(() => {
+    elapsed++;
+    progressFill.style.width = `${(elapsed / totalDuration) * 100}%`;
+    timeElapsed.textContent = formatTime(elapsed);
+    if (elapsed >= totalDuration) endSession();
+  }, 1000);
+
+  statusMsg.textContent = 'Subliminal affirmations flowing · Stay relaxed';
+}
+
+function endSession() {
+  clearInterval(intervalId);
+  clearInterval(affIntervalId);
+  stopBreathing();
+  fadeOut();
+  if (speechAvailable) window.speechSynthesis.cancel();
+  playing = false;
+  elapsed = 0;
+  subIndicator.classList.remove('visible');
+  setOrbPlay();
+  completeGlow.classList.add('active');
+
+  affText.classList.remove('visible');
+  affCat.classList.remove('visible');
+  setTimeout(() => {
+    affText.style.fontStyle = 'normal';
+    affText.style.fontSize = '14px';
+    affText.style.color = 'var(--text-dim)';
+    affText.textContent = 'Session complete. It is done. It is already real.';
+    affCat.textContent = '✦ Complete';
+    affText.classList.add('visible');
+    affCat.classList.add('visible');
+  }, 600);
+
+  progressFill.style.width = '100%';
+  statusMsg.textContent = '✦ Your subconscious has received all affirmations ✦';
+  currNum.textContent = '—';
+}
+
+// ─── Event Listeners ───────────────────────────────────────────────────────
+orbBtn.addEventListener('click', () => {
+  if (elapsed === 0 && !playing) startSession();
+  else if (playing) pauseSession();
+  else resumeSession();
+});
+
+restartBtn.addEventListener('click', () => {
+  clearInterval(intervalId);
+  clearInterval(affIntervalId);
+  stopBreathing();
+  fadeOut();
+  if (speechAvailable) window.speechSynthesis.cancel();
+  playing = false;
+  elapsed = 0;
+  currentIndex = 0;
+  progressFill.style.width = '0%';
+  timeElapsed.textContent = '0:00';
+  statusMsg.classList.remove('visible');
+  currNum.textContent = '—';
+  subIndicator.classList.remove('visible');
+  completeGlow.classList.remove('active');
+  setOrbPlay();
+
+  affText.classList.remove('visible');
+  affCat.classList.remove('visible');
+  setTimeout(() => {
+    affText.style.fontStyle = 'normal';
+    affText.style.fontSize = '14px';
+    affText.style.color = 'var(--text-dim)';
+    affText.textContent = 'Close your eyes. Breathe slowly. Let your mind rest.';
+    affCat.textContent = 'Ready';
+    affText.classList.add('visible');
+    affCat.classList.add('visible');
+  }, 600);
+});
+
+shuffleBtn.addEventListener('click', () => {
+  shuffled = !shuffled;
+  order = shuffled
+    ? [...affirmations.keys()].sort(() => Math.random() - 0.5)
+    : [...affirmations.keys()];
+  shuffleBtn.style.color = shuffled ? 'var(--indigo)' : '';
+});
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    speed = btn.dataset.speed;
+    if (playing) {
+      clearInterval(affIntervalId);
+      stopBreathing();
+      startBreathing();
+      scheduleAffirmations();
+    }
+  });
+});
+
+volSlider.addEventListener('input', () => {
+  const v = parseFloat(volSlider.value);
+  if (audioCtx && gainNode) gainNode.gain.setTargetAtTime(v * 0.35, audioCtx.currentTime, 0.3);
+  volVal.textContent = Math.round(v * 100) + '%';
+});
+
+subVolSlider.addEventListener('input', () => {
+  subVolume = parseFloat(subVolSlider.value);
+  // Display level label
+  if (subVolume <= 0.01) subVolVal.textContent = 'Ghost';
+  else if (subVolume <= 0.025) subVolVal.textContent = 'Ultra';
+  else if (subVolume <= 0.05) subVolVal.textContent = 'Deep';
+  else subVolVal.textContent = Math.round(subVolume * 100) + '%';
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+totalNum.textContent = affirmations.length;
+affText.classList.add('visible');
+affCat.classList.add('visible');
+</script>
+</body>
+</html>

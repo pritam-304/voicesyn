@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subliminal Mind — Reprogram Your Subconscious</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">🧠 Subliminal Mind</div>
+  <div class="tagline">Affirmations whisper beneath sound — heard by the subconscious, not the conscious mind</div>
+</header>
+
+<main>
+
+  <!-- ── VOICE SELECTION ───────────────────────────────────────── -->
+  <section class="card" id="sec-voice">
+    <div class="sec-header">
+      <span class="badge">1</span>
+      <h2>Choose Voice</h2>
+    </div>
+    <p class="hint">
+      The three best free natural male voices, ranked.
+      <strong>Microsoft Neural voices</strong> (available in Edge / Windows 11) are
+      far more natural than standard browser voices.
+      Your browser will show which are available on your system.
+    </p>
+
+    <div class="voice-cards" id="voice-cards">
+      <!-- rendered by JS -->
+    </div>
+
+    <details class="voice-details">
+      <summary>Why these three voices?</summary>
+      <div class="voice-research">
+        <table>
+          <thead><tr><th>Voice</th><th>Source</th><th>Accent</th><th>Quality</th><th>Why chosen</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Guy (Natural)</strong></td>
+              <td>Microsoft Neural</td>
+              <td>American</td>
+              <td>⭐⭐⭐⭐⭐</td>
+              <td>Smooth, neutral, no strong regional accent. Top pick for affirmations.</td>
+            </tr>
+            <tr>
+              <td><strong>Andrew (Natural)</strong></td>
+              <td>Microsoft Neural</td>
+              <td>American</td>
+              <td>⭐⭐⭐⭐⭐</td>
+              <td>Warm conversational tone. Feels personal, ideal for self-affirmation.</td>
+            </tr>
+            <tr>
+              <td><strong>Christopher (Natural)</strong></td>
+              <td>Microsoft Neural</td>
+              <td>American</td>
+              <td>⭐⭐⭐⭐⭐</td>
+              <td>Clear, calm, professional. Great for meditation-style delivery.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">
+          These three are all Microsoft Azure Neural voices exposed free through the Windows
+          Speech API and Microsoft Edge. Google's <em>Google US English</em> male is also included
+          as a fallback (cross-platform, works in Chrome on any OS).
+        </p>
+      </div>
+    </details>
+
+    <div class="voice-tune">
+      <label>Speaking rate
+        <div class="range-row">
+          <input type="range" id="rate-slider" min="0.5" max="1.2" step="0.05" value="0.8">
+          <span id="rate-val">0.80×</span>
+        </div>
+      </label>
+      <label>Pitch
+        <div class="range-row">
+          <input type="range" id="pitch-slider" min="0.7" max="1.2" step="0.05" value="0.95">
+          <span id="pitch-val">0.95</span>
+        </div>
+      </label>
+    </div>
+  </section>
+
+  <!-- ── AFFIRMATIONS ──────────────────────────────────────────── -->
+  <section class="card" id="sec-aff">
+    <div class="sec-header">
+      <span class="badge">2</span>
+      <h2>Affirmations</h2>
+    </div>
+    <p class="hint">
+      Present-tense, positive statements. Keep them short.
+      Examples: <em>"I am confident and calm"</em> · <em>"I attract abundance effortlessly"</em>
+    </p>
+
+    <div class="aff-input-row">
+      <input type="text" id="aff-input" placeholder="Type an affirmation and press Enter…">
+      <button class="btn btn-primary" id="btn-add">+ Add</button>
+    </div>
+
+    <div class="bulk-row">
+      <textarea id="bulk-input" placeholder="Or paste multiple affirmations (one per line)…"></textarea>
+      <button class="btn btn-sm" id="btn-bulk">Import lines</button>
+    </div>
+
+    <ul id="aff-list" class="aff-list"></ul>
+    <div class="aff-footer">
+      <span id="aff-count" class="muted">0 affirmations</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" id="btn-load-defaults">Load sample set</button>
+        <button class="btn btn-sm danger" id="btn-clear">Clear all</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SUBLIMINAL MODE + VOLUME MIXING ─────────────────────── -->
+  <section class="card" id="sec-mix">
+    <div class="sec-header">
+      <span class="badge">3</span>
+      <h2>Volume Mix</h2>
+    </div>
+
+    <!-- Subliminal toggle -->
+    <div class="subliminal-toggle-wrap">
+      <div class="subliminal-toggle" id="sub-toggle" onclick="toggleSubliminal()">
+        <span class="sub-icon">🔇</span>
+        <div class="sub-toggle-text">
+          <div class="sub-toggle-title" id="sub-toggle-title">Normal Mode</div>
+          <div class="sub-toggle-desc"  id="sub-toggle-desc">Voice is audible alongside sound</div>
+        </div>
+        <div class="sub-switch" id="sub-switch"></div>
+      </div>
+      <div class="sub-active-banner" id="sub-banner" style="display:none">
+        <span class="sub-pulse"></span>
+        SUBLIMINAL ACTIVE — affirmations are whispering beneath your sound, bypassing conscious resistance
+      </div>
+    </div>
+
+    <!-- Three-layer volume sliders -->
+    <div class="mix-sliders">
+
+      <!-- Layer 1: Masking sound -->
+      <div class="mix-row mask-vol-row">
+        <div class="mix-label">
+          <span class="mix-icon">🔊</span>
+          <div>
+            <div class="mix-name">Masking Sound</div>
+            <div class="mix-sub" id="mask-vol-sub">Occupies conscious attention</div>
+          </div>
+        </div>
+        <div class="mix-control">
+          <input type="range" id="mask-vol" min="0" max="1" step="0.02" value="0.75" class="big-range masking-range">
+          <span id="mask-vol-val" class="mix-val">75%</span>
+        </div>
+      </div>
+
+      <!-- Layer 2: Ambient atmosphere -->
+      <div class="mix-row">
+        <div class="mix-label">
+          <span class="mix-icon">🌙</span>
+          <div>
+            <div class="mix-name">Atmosphere</div>
+            <div class="mix-sub">Background texture beneath masking</div>
+          </div>
+        </div>
+        <div class="mix-control">
+          <input type="range" id="amb-vol" min="0" max="1" step="0.02" value="0.65" class="big-range ambient-range">
+          <span id="amb-vol-val" class="mix-val">65%</span>
+        </div>
+      </div>
+
+      <div class="mix-row">
+        <div class="mix-label">
+          <span class="mix-icon">🎙</span>
+          <div>
+            <div class="mix-name">Affirmation Voice</div>
+            <div class="mix-sub" id="voice-vol-sub">Whispered below consciousness</div>
+          </div>
+        </div>
+        <div class="mix-control">
+          <input type="range" id="voice-vol" min="0" max="1" step="0.01" value="0.02" class="big-range voice-range">
+          <span id="voice-vol-val" class="mix-val">2%</span>
+        </div>
+        <div class="subliminal-depth" id="depth-meter">
+          <div class="depth-bar" id="depth-bar"></div>
+          <div class="depth-labels">
+            <span>Subliminal</span>
+            <span id="depth-zone">Deep ✓</span>
+            <span>Audible</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MASKING SOUNDS ─────────────────────────────────────────── -->
+  <section class="card" id="sec-mask">
+    <div class="sec-header">
+      <span class="badge badge-mask">4</span>
+      <h2>Masking Sound</h2>
+    </div>
+    <p class="hint">
+      A prominent foreground sound your <strong>conscious mind focuses on</strong>.
+      With this playing loudly, the subliminal voice slips underneath unnoticed.
+      Choose the texture that keeps your attention naturally — all synthesized locally.
+    </p>
+    <div class="mask-grid" id="mask-grid">
+      <div class="mask-card" data-mask="none">
+        <span class="amb-icon">🔇</span>
+        <span class="amb-name">None</span>
+      </div>
+      <div class="mask-card active" data-mask="brown">
+        <span class="amb-icon">🟫</span>
+        <span class="amb-name">Brown Noise</span>
+        <span class="mask-tag">Deep</span>
+      </div>
+      <div class="mask-card" data-mask="white">
+        <span class="amb-icon">⬜</span>
+        <span class="amb-name">White Noise</span>
+        <span class="mask-tag">Full</span>
+      </div>
+      <div class="mask-card" data-mask="pink">
+        <span class="amb-icon">🎀</span>
+        <span class="amb-name">Pink Noise</span>
+        <span class="mask-tag">Warm</span>
+      </div>
+      <div class="mask-card" data-mask="waterfall">
+        <span class="amb-icon">🏔</span>
+        <span class="amb-name">Waterfall</span>
+      </div>
+      <div class="mask-card" data-mask="heavyrain">
+        <span class="amb-icon">⛈</span>
+        <span class="amb-name">Heavy Rain</span>
+      </div>
+      <div class="mask-card" data-mask="fan">
+        <span class="amb-icon">🌀</span>
+        <span class="amb-name">Box Fan</span>
+      </div>
+      <div class="mask-card" data-mask="cafe">
+        <span class="amb-icon">☕</span>
+        <span class="amb-name">Café Murmur</span>
+      </div>
+      <div class="mask-card" data-mask="vinyl">
+        <span class="amb-icon">📻</span>
+        <span class="amb-name">Vinyl Static</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AMBIENT SOUNDS ────────────────────────────────────────── -->
+  <section class="card" id="sec-ambient">
+    <div class="sec-header">
+      <span class="badge">5</span>
+      <h2>Atmosphere</h2>
+    </div>
+    <p class="hint">
+      The dominant foreground audio. Masks the affirmation voice so your
+      conscious mind doesn't focus on or reject it. All sounds synthesized locally.
+    </p>
+
+    <div class="ambient-grid" id="ambient-grid">
+      <div class="amb-card" data-sound="none">
+        <span class="amb-icon">🔇</span>
+        <span class="amb-name">None</span>
+      </div>
+      <div class="amb-card active" data-sound="campfire">
+        <span class="amb-icon">🔥</span>
+        <span class="amb-name">Campfire</span>
+      </div>
+      <div class="amb-card" data-sound="thunderstorm">
+        <span class="amb-icon">⛈</span>
+        <span class="amb-name">Thunderstorm</span>
+      </div>
+      <div class="amb-card" data-sound="ocean">
+        <span class="amb-icon">🌊</span>
+        <span class="amb-name">Deep Ocean</span>
+      </div>
+      <div class="amb-card" data-sound="rain">
+        <span class="amb-icon">🌧</span>
+        <span class="amb-name">Gentle Rain</span>
+      </div>
+      <div class="amb-card" data-sound="forest">
+        <span class="amb-icon">🌿</span>
+        <span class="amb-name">Forest Birds</span>
+      </div>
+      <div class="amb-card" data-sound="night">
+        <span class="amb-icon">🦗</span>
+        <span class="amb-name">Night Crickets</span>
+      </div>
+      <div class="amb-card" data-sound="wind">
+        <span class="amb-icon">🍃</span>
+        <span class="amb-name">Mountain Wind</span>
+      </div>
+      <div class="amb-card" data-sound="stream">
+        <span class="amb-icon">💧</span>
+        <span class="amb-name">Forest Stream</span>
+      </div>
+      <div class="amb-card" data-sound="bowl">
+        <span class="amb-icon">🎶</span>
+        <span class="amb-name">Singing Bowl</span>
+      </div>
+      <div class="amb-card" data-sound="space">
+        <span class="amb-icon">🌌</span>
+        <span class="amb-name">Deep Space</span>
+      </div>
+      <div class="amb-card" data-sound="theta">
+        <span class="amb-icon">🧠</span>
+        <span class="amb-name">Theta Beats</span>
+        <span class="amb-tag">6 Hz</span>
+      </div>
+      <div class="amb-card" data-sound="delta">
+        <span class="amb-icon">🔮</span>
+        <span class="amb-name">Delta Beats</span>
+        <span class="amb-tag">2 Hz</span>
+      </div>
+      <div class="amb-card" data-sound="alpha">
+        <span class="amb-icon">✨</span>
+        <span class="amb-name">Alpha Beats</span>
+        <span class="amb-tag">10 Hz</span>
+      </div>
+      <div class="amb-card" data-sound="om">
+        <span class="amb-icon">🕉</span>
+        <span class="amb-name">Om Chant</span>
+        <span class="amb-tag">136 Hz</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PLAYBACK ───────────────────────────────────────────────── -->
+  <section class="card" id="sec-play">
+    <div class="sec-header">
+      <span class="badge">6</span>
+      <h2>Playback</h2>
+    </div>
+
+    <div class="play-options">
+      <label>Pause between affirmations
+        <div class="range-row">
+          <input type="range" id="pause-slider" min="0.5" max="8" step="0.5" value="2">
+          <span id="pause-val">2.0s</span>
+        </div>
+      </label>
+      <label>Loops
+        <div class="loop-row">
+          <input type="number" id="loops" value="3" min="1" max="∞">
+          <label class="check-label">
+            <input type="checkbox" id="loop-inf"> Infinite
+          </label>
+        </div>
+      </label>
+    </div>
+
+    <div class="transport">
+      <button class="btn btn-play" id="btn-play">▶ Start</button>
+      <button class="btn btn-pause" id="btn-pause" disabled>⏸ Pause</button>
+      <button class="btn btn-stop"  id="btn-stop"  disabled>⏹ Stop</button>
+    </div>
+
+    <div class="now-playing" id="now-playing" style="display:none">
+      <div class="np-label" id="np-label">Now reading:</div>
+      <div class="np-text"  id="np-text"></div>
+      <div class="np-meta"  id="np-meta"></div>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap" style="display:none">
+      <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-labels">
+        <span id="prog-current">Affirmation 0 / 0</span>
+        <span id="prog-loop">Loop 1</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast"></div>
+<footer>Subliminal Mind · All audio generated locally · No data sent anywhere · Works offline after first load</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

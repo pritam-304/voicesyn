@@ -1,0 +1,15 @@
+# Python virtual environment
+venv311/
+
+# Generated audio outputs (recreated on demand)
+subliminal/output/
+subliminal/reference/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subliminal Voice — Your Voice, Your Affirmations</title>
+<link rel="stylesheet" href="/static/css/subliminal.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">🎙 Subliminal Voice</div>
+  <div class="tagline">Affirmations read by your own cloned voice · 100% local · no cloud</div>
+  <div id="model-banner" class="model-banner loading">
+    <span id="model-icon">⏳</span>
+    <span id="model-msg">Loading AI model in background…</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- STEP 1: Voice Profile -->
+  <section class="card" id="sec-voice">
+    <div class="step-header">
+      <span class="step-badge">1</span>
+      <h2>Voice Profile</h2>
+    </div>
+    <p class="hint">
+      Select a saved voice profile — or record a new one. Profiles are stored locally
+      and reused across sessions. No re-recording needed.
+    </p>
+
+    <!-- Saved profiles list -->
+    <div id="profiles-wrap">
+      <div id="profiles-grid" class="profiles-grid">
+        <!-- rendered by JS -->
+      </div>
+      <div id="no-profiles" class="no-profiles" style="display:none">
+        No profiles yet. Record one below ↓
+      </div>
+    </div>
+
+    <!-- Add new profile panel -->
+    <details class="add-profile-panel" id="add-profile-details">
+      <summary id="add-profile-summary">➕ Add New Voice Profile</summary>
+      <div class="add-profile-body">
+        <div class="profile-name-row">
+          <label for="profile-name-input">Profile name</label>
+          <input type="text" id="profile-name-input"
+                 placeholder="e.g. John, Dad, My Voice…" maxlength="40" autocomplete="off">
+        </div>
+        <div class="voice-controls">
+          <button class="btn btn-primary btn-lg" id="btn-start-voice">🎙 Start Recording</button>
+          <button class="btn btn-danger  btn-lg" id="btn-stop-voice" disabled>⏹ Stop</button>
+          <button class="btn btn-sm"             id="btn-upload-voice">📂 Upload wav/mp3</button>
+          <input type="file" id="voice-file-input" accept="audio/*" style="display:none">
+        </div>
+        <canvas id="voice-wave" class="wave-canvas"></canvas>
+        <div id="voice-player-wrap" style="display:none">
+          <audio id="voice-preview" controls></audio>
+          <button class="btn btn-success" id="btn-save-voice">✔ Save Profile</button>
+          <button class="btn btn-sm danger" id="btn-retake-voice">↺ Re-take</button>
+        </div>
+        <div id="voice-status" class="status-bar"></div>
+        <span id="voice-timer" class="timer"></span>
+      </div>
+    </details>
+  </section>
+
+  <!-- STEP 2: Affirmations list -->
+  <section class="card" id="sec-affirmations">
+    <div class="step-header">
+      <span class="step-badge">2</span>
+      <h2>Write Your Affirmations</h2>
+    </div>
+    <p class="hint">
+      Add one affirmation per line, or use the input below.
+      Short, positive, present-tense statements work best
+      (e.g. <em>"I am calm and confident"</em>).
+    </p>
+
+    <div class="aff-input-row">
+      <input type="text" id="aff-input" placeholder="Type an affirmation and press Enter…" autocomplete="off">
+      <button class="btn btn-primary" id="btn-add-aff">+ Add</button>
+    </div>
+    <div class="paste-row">
+      <textarea id="aff-bulk" placeholder="Or paste multiple affirmations here (one per line)…"></textarea>
+      <button class="btn btn-sm" id="btn-bulk-add">Import all lines</button>
+    </div>
+
+    <ul id="aff-list" class="aff-list"></ul>
+    <div class="aff-footer">
+      <span id="aff-count" class="muted">0 affirmations</span>
+      <button class="btn btn-sm danger" id="btn-clear-aff">Clear all</button>
+    </div>
+  </section>
+
+  <!-- STEP 3: Settings -->
+  <section class="card" id="sec-settings">
+    <div class="step-header">
+      <span class="step-badge">3</span>
+      <h2>Playback Settings</h2>
+    </div>
+    <div class="settings-grid">
+      <label>
+        Loops
+        <input type="number" id="loops" value="3" min="1" max="100">
+        <span class="muted">× repeat entire set</span>
+      </label>
+      <label>
+        Pause between
+        <div class="range-row">
+          <input type="range" id="pause-slider" min="200" max="5000" step="100" value="1200">
+          <span id="pause-val">1.2s</span>
+        </div>
+      </label>
+      <label>
+        Voice expressiveness
+        <div class="range-row">
+          <input type="range" id="exag-slider" min="0.1" max="0.9" step="0.05" value="0.35">
+          <span id="exag-val">0.35</span>
+        </div>
+      </label>
+      <label>
+        Pacing control
+        <div class="range-row">
+          <input type="range" id="cfg-slider" min="0.1" max="0.9" step="0.05" value="0.5">
+          <span id="cfg-val">0.50</span>
+        </div>
+      </label>
+    </div>
+    <div class="settings-tip">
+      💡 For subliminals: low expressiveness (~0.3) + medium pacing (~0.5) sounds most natural and calm.
+    </div>
+  </section>
+
+  <!-- STEP 4: Generate -->
+  <section class="card" id="sec-generate">
+    <div class="step-header">
+      <span class="step-badge">4</span>
+      <h2>Generate Your Subliminal</h2>
+    </div>
+    <button class="btn btn-primary btn-xl" id="btn-generate">✨ Generate with My Voice</button>
+    <div id="gen-progress" style="display:none">
+      <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+      <p id="gen-status-msg" class="muted">Synthesizing…</p>
+    </div>
+    <div id="gen-status" class="status-bar"></div>
+
+    <div id="player-section" style="display:none">
+      <div class="player-hdr">
+        <span>🎧 Your Subliminal Audio</span>
+        <span id="audio-meta" class="muted"></span>
+      </div>
+      <audio id="out-audio" controls style="width:100%"></audio>
+      <div class="download-row">
+        <a id="btn-download" class="btn btn-success" download>⬇ Download WAV</a>
+        <button class="btn btn-sm" id="btn-new">↺ Generate Again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tips -->
+  <section class="card tips-card">
+    <div class="step-header">
+      <span class="step-badge">💡</span>
+      <h2>Tips for Best Results</h2>
+    </div>
+    <ul class="tips-list">
+      <li><strong>Voice sample:</strong> Record in a quiet room. Speak at your normal pace. 15–20 seconds is ideal.</li>
+      <li><strong>Affirmations:</strong> Present-tense ("I am…", "I have…", "I feel…"). Keep each one short (under 10 words).</li>
+      <li><strong>First generation is slower</strong> — Chatterbox downloads its model (~1 GB) on first use. Subsequent runs are fast.</li>
+      <li><strong>CPU speed:</strong> On CPU, each affirmation takes 15–40 seconds to synthesize. GPU is 10× faster.</li>
+      <li><strong>Export:</strong> Use the downloaded WAV in a subliminal music editor — layer it under rain sounds, binaural beats, or music at -20 dB.</li>
+    </ul>
+  </section>
+
+</main>
+
+<div id="toast" class="toast"></div>
+<footer>Subliminal Voice · 100% local · powered by Chatterbox (Resemble AI) · MIT license</footer>
+
+<script src="/static/js/subliminal.js"></script>
+</body>
+</html>
