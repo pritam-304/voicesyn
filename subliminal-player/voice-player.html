@@ -597,10 +597,109 @@
   }
   .status.visible { opacity: 1; }
 
-  /* ── Scrollbar for file list ─────────────────── */
-  .file-list::-webkit-scrollbar { width: 3px; }
-  .file-list::-webkit-scrollbar-track { background: transparent; }
-  .file-list::-webkit-scrollbar-thumb { background: rgba(92,107,192,0.2); border-radius: 2px; }
+  /* ── Source tabs ───────────────────────────── */
+  .tab-row {
+    display: flex;
+    border-bottom: 1px solid rgba(92,107,192,0.15);
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-faint);
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 10px 0;
+    cursor: pointer;
+    transition: all 0.25s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text-dim); }
+  .tab-btn.active {
+    color: var(--indigo-dim);
+    border-bottom-color: var(--indigo);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── Saved file checklist ────────────────────── */
+  .saved-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .saved-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    background: rgba(92,107,192,0.05);
+    border: 1px solid rgba(92,107,192,0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .saved-item:hover { border-color: rgba(92,107,192,0.3); background: rgba(92,107,192,0.09); }
+  .saved-item.checked { border-color: rgba(124,143,224,0.45); background: rgba(92,107,192,0.13); }
+  .saved-check {
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(92,107,192,0.35);
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .saved-item.checked .saved-check {
+    background: var(--indigo);
+    border-color: var(--indigo);
+  }
+  .saved-check::after {
+    content: '';
+    width: 4px; height: 8px;
+    border: 2px solid white;
+    border-top: none; border-left: none;
+    transform: rotate(45deg) translateY(-1px);
+    display: none;
+  }
+  .saved-item.checked .saved-check::after { display: block; }
+  .saved-name {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    flex: 1;
+  }
+  .saved-empty {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    font-style: italic;
+    text-align: center;
+    padding: 18px 0;
+    line-height: 1.8;
+  }
+  .saved-select-all {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    padding: 0 0 8px 0;
+    transition: color 0.2s;
+  }
+  .saved-select-all:hover { color: var(--indigo); }
 </style>
 </head>
 <body>
@@ -620,43 +719,46 @@
   <div class="setup-panel" id="setupPanel">
     <div class="setup-title">Load Your Session</div>
 
-    <div>
-      <div class="setup-label">
-        Affirmation Audio Files
-        <span class="opt">— WAV or MP3 from app3.py, select all at once</span>
-      </div>
-      <div class="drop-zone" id="dropZone">
-        <input type="file" id="fileInput" multiple accept="audio/wav,audio/mpeg,audio/mp3,audio/ogg,.wav,.mp3,.ogg">
-        <div class="drop-icon">◎</div>
-        <div class="drop-title">Drop files here or tap to browse</div>
-        <div class="drop-hint">affirmation_0.wav · affirmation_1.wav · affirmation_2.wav …</div>
-      </div>
+    <!-- Source tabs -->
+    <div class="tab-row">
+      <button class="tab-btn active" data-tab="saved">Saved Files</button>
+      <button class="tab-btn" data-tab="local">Local Files</button>
     </div>
 
-    <div class="file-list" id="fileList"></div>
+    <!-- ── Tab: Saved files (from AFFIRMATIONS config) ── -->
+    <div class="tab-pane active" id="tab-saved">
+      <button class="saved-select-all" id="selectAllBtn">Select All</button>
+      <div class="saved-list" id="savedList"></div>
+    </div>
 
-    <div>
+    <!-- ── Tab: Local files (manual picker) ── -->
+    <div class="tab-pane" id="tab-local">
+      <div>
+        <div class="setup-label">
+          Affirmation Audio Files
+          <span class="opt">— WAV or MP3, select all at once</span>
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" multiple accept="audio/wav,audio/mpeg,audio/mp3,audio/ogg,.wav,.mp3,.ogg">
+          <div class="drop-icon">◎</div>
+          <div class="drop-title">Drop files here or tap to browse</div>
+          <div class="drop-hint">affirmation_0.wav · affirmation_1.wav · …</div>
+        </div>
+      </div>
+      <div class="file-list" id="fileList" style="margin-top:10px;"></div>
+    </div>
+
+    <div style="margin-top:18px;">
       <div class="setup-label">
         Affirmation Texts
         <span class="opt">— optional, one per line, matched by order</span>
       </div>
       <textarea class="texts-area" id="textsArea"
-        placeholder="I am calm, peaceful, and completely free.&#10;I breathe deeply and cleanly. My lungs are full of pure life.&#10;I am enough. Completely and unconditionally.&#10;…"></textarea>
+        placeholder="I am calm, peaceful, and completely free.&#10;I breathe deeply and cleanly.&#10;…"></textarea>
     </div>
 
     <div class="setup-err" id="setupErr"></div>
     <button class="begin-btn" id="beginBtn" disabled>Begin Session</button>
-
-    <!-- Auto-load state (shown when AFFIRMATIONS config is set) -->
-    <div id="autoLoadState" style="display:none;text-align:center;padding:32px 0;">
-      <div class="setup-title" style="margin-bottom:14px;">Loading Your Session</div>
-      <div id="autoLoadMsg" style="font-size:12px;letter-spacing:1.5px;color:var(--text-faint);">Fetching affirmations…</div>
-      <div style="margin-top:20px;display:flex;justify-content:center;gap:6px;" id="autoLoadDots">
-        <div style="width:5px;height:5px;border-radius:50%;background:var(--indigo);animation:dot-pulse 1.4s ease-in-out 0s infinite;"></div>
-        <div style="width:5px;height:5px;border-radius:50%;background:var(--indigo);animation:dot-pulse 1.4s ease-in-out 0.2s infinite;"></div>
-        <div style="width:5px;height:5px;border-radius:50%;background:var(--indigo);animation:dot-pulse 1.4s ease-in-out 0.4s infinite;"></div>
-      </div>
-    </div>
   </div>
 
   <!-- ── Session UI (hidden until files loaded) ── -->
@@ -981,22 +1083,22 @@ async function decodeAllFiles(files) {
   }
 }
 
-// ─── Decode URLs into AudioBuffers (auto-load mode) ───────────────────
+// ─── Decode URLs into AudioBuffers (saved mode) ──────────────────
 async function decodeAllUrls(items) {
   audioBuffers = [];
   affTexts     = [];
   totalDurSecs = 0;
-  const autoMsg = document.getElementById('autoLoadMsg');
   for (let i = 0; i < items.length; i++) {
-    if (autoMsg) autoMsg.textContent = `Loading ${i + 1} of ${items.length}…`;
+    setupErr.textContent = `Fetching ${i + 1} of ${items.length}…`;
     const res = await fetch(items[i].url);
-    if (!res.ok) throw new Error(`File not found: ${items[i].url} (HTTP ${res.status}). Make sure the file is pushed to GitHub.`);
+    if (!res.ok) throw new Error(`Not found: ${items[i].url} (HTTP ${res.status})`);
     const ab  = await res.arrayBuffer();
     const buf = await audioCtx.decodeAudioData(ab);
     audioBuffers.push(buf);
     affTexts.push(items[i].text || `Affirmation ${i + 1}`);
     totalDurSecs += buf.duration + (PAUSE_MS / 1000);
   }
+  setupErr.textContent = '';
 }
 
 // ─── Play a specific affirmation buffer ──────────────────────────────
@@ -1181,35 +1283,50 @@ function resetState() {
   setOrbPlay();
 }
 
-// ─── Begin — fires when user presses Begin Session ────────────────────
+// ─── Begin Session ─────────────────────────────────────────────────
 beginBtn.addEventListener('click', async () => {
-  if (pendingFiles.length === 0) { setupErr.textContent = 'Please select at least one audio file.'; return; }
-  beginBtn.disabled   = true;
-  beginBtn.textContent = 'Loading…';
   setupErr.textContent = '';
+  beginBtn.disabled    = true;
+  beginBtn.textContent = 'Loading…';
 
-  // Parse affirmation texts
+  // Merge texts from textarea (optional override)
   const lines = textsArea.value.trim().split('\n').map(l => l.trim()).filter(Boolean);
-  affTexts = lines;
-  totalAff = pendingFiles.length;
-  totalNum.textContent = totalAff;
-  timeDuration.textContent = fmtTime(Math.round(
-    pendingFiles.length * 8 // rough estimate before decode
-  ));
 
   initAudio();
+
   try {
-    await decodeAllFiles(pendingFiles);
+    if (activeTab === 'saved') {
+      // Gather checked items in order
+      const checked = [];
+      document.querySelectorAll('.saved-item.checked').forEach(el => {
+        checked.push(AFFIRMATIONS[parseInt(el.dataset.index)]);
+      });
+      if (!checked.length) throw new Error('Select at least one saved file.');
+
+      if (location.protocol === 'file:') {
+        throw new Error('Cannot fetch files when opened locally. Use the GitHub Pages URL or run: python -m http.server 8080');
+      }
+      await decodeAllUrls(checked);
+      // Override texts if user typed them
+      if (lines.length) affTexts = audioBuffers.map((_, i) => lines[i] || affTexts[i] || `Affirmation ${i+1}`);
+
+    } else {
+      // Local files mode
+      if (!pendingFiles.length) throw new Error('Please select at least one audio file.');
+      const localLines = lines;
+      await decodeAllFiles(pendingFiles);
+      affTexts = audioBuffers.map((_, i) => localLines[i] || `Affirmation ${i+1}`);
+    }
   } catch(e) {
-    setupErr.textContent = 'Could not decode audio: ' + e.message;
-    beginBtn.disabled = false;
+    setupErr.textContent = e.message;
+    beginBtn.disabled    = false;
     beginBtn.textContent = 'Begin Session';
     return;
   }
 
+  totalAff = audioBuffers.length;
+  totalNum.textContent     = totalAff;
   timeDuration.textContent = fmtTime(Math.round(totalDurSecs));
-
-  // Switch views
   setupPanel.classList.add('hidden');
   sessionUI.classList.add('visible');
 });
@@ -1251,23 +1368,15 @@ loadNewBtn.addEventListener('click', () => {
   resetState();
   sessionUI.classList.remove('visible');
   setupPanel.classList.remove('hidden');
-  // Restore all setup UI elements (may have been hidden by autoInit)
-  document.querySelector('.drop-zone').style.display        = '';
-  document.querySelector('.file-list').style.display        = '';
-  document.querySelectorAll('.setup-label').forEach(el => el.style.display = '');
-  document.querySelector('.texts-area').style.display       = '';
-  document.getElementById('beginBtn').style.display         = '';
-  document.getElementById('setupErr').style.display         = '';
-  document.getElementById('autoLoadState').style.display    = 'none';
-  fileList.innerHTML = '';
-  textsArea.value    = '';
-  pendingFiles       = [];
-  audioBuffers       = [];
-  beginBtn.disabled  = true;
+  fileList.innerHTML   = '';
+  textsArea.value      = '';
+  pendingFiles         = [];
+  audioBuffers         = [];
+  fileInput.value      = '';
   beginBtn.textContent = 'Begin Session';
-  fileInput.value    = '';
-  affText.textContent     = 'Close your eyes. Breathe slowly. Let your mind rest.';
-  affNum.textContent      = 'Tap the orb to begin';
+  updateBeginBtn();
+  affText.textContent  = 'Close your eyes. Breathe slowly. Let your mind rest.';
+  affNum.textContent   = 'Tap the orb to begin';
 });
 
 // ─── Volume sliders ───────────────────────────────────────────────────
@@ -1309,64 +1418,11 @@ function setOrbPlay() {
   orbBtn.classList.remove('playing');
 }
 
-// ─── Auto-init from AFFIRMATIONS config ─────────────────────────────
-async function autoInit() {
-  if (!AFFIRMATIONS.length) return; // fall through to manual file picker
-
-  // ── Immediately switch to session screen ────────────────────────
-  totalAff = AFFIRMATIONS.length;
-  totalNum.textContent = totalAff;
-  setupPanel.classList.add('hidden');
-  sessionUI.classList.add('visible');
-
-  // Show loading state in orb area
-  affNum.style.opacity  = '1';
-  affNum.textContent    = 'Loading audio…';
-  affText.style.opacity = '1';
-  affText.style.transform = 'none';
-  affText.style.fontStyle = 'normal';
-  affText.style.fontSize  = '13px';
-  affText.style.color     = 'var(--text-faint)';
-  affText.textContent     = 'Fetching your affirmations — please wait';
-  orbBtn.style.pointerEvents = 'none';
-  orbBtn.style.opacity       = '0.4';
-
-  // Detect file:// protocol — fetch() does not work on local files
-  if (location.protocol === 'file:') {
-    affNum.textContent  = 'Cannot auto-load locally';
-    affText.style.color = 'var(--rose-dim)';
-    affText.textContent = 'Open via GitHub Pages URL or run a local server (python -m http.server 8080). file:// protocol blocks audio fetching.';
-    return;
-  }
-
-  initAudio();
-  try {
-    await decodeAllUrls(AFFIRMATIONS);
-  } catch(e) {
-    affNum.textContent  = 'Load failed';
-    affText.textContent = e.message;
-    affText.style.color = 'var(--rose-dim)';
-    orbBtn.style.opacity = '0.2';
-    return;
-  }
-
-  // ── Ready ────────────────────────────────────────────────────────
-  timeDuration.textContent   = fmtTime(Math.round(totalDurSecs));
-  orbBtn.style.pointerEvents = '';
-  orbBtn.style.opacity       = '';
-
-  affNum.textContent  = 'Tap the orb to begin';
-  affText.style.fontStyle = 'normal';
-  affText.style.fontSize  = '14px';
-  affText.style.color     = 'var(--text-dim)';
-  affText.textContent     = 'Close your eyes. Breathe slowly. Let your mind rest.';
-}
-
-// ─── Init ─────────────────────────────────────────────────────────────
+// ─── Init ────────────────────────────────────────────────────────────
 totalNum.textContent = '—';
 affText.classList.add('visible');
 affNum.classList.add('visible');
-autoInit();
+renderSavedList();
 </script>
 </body>
 </html>
