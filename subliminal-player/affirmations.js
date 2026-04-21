@@ -9,4 +9,5 @@ const AFFIRMATIONS = [
   { url: "subliminal-player/audios/attract.wav", text: "Attraction" },
   { url: "subliminal-player/audios/self.wav",    text: "Self" },
   // Add more entries here — one per affirmation file
+  { url: "subliminal-player/audios/all.wav", text: "All" },
 ];

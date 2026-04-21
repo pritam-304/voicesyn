@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Subliminal Affirmation Player</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#07090b; --surface:#0d1014; --indigo:#7c8fe0; --indigo-dim:#b8c2f0;
+      --rose:#d47d9e; --rose-dim:#f0aac8; --text:#ffffff;
+      --text-dim:#ede8ff; --text-faint:#ccc5e8; --border:rgba(92,107,192,0.14);
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Jost',sans-serif;
+      font-weight:300; min-height:100vh; display:flex; flex-direction:column;
+      align-items:center; padding:36px 20px 60px; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(ellipse 55% 45% at 15% 25%,rgba(92,107,192,.07) 0%,transparent 65%),
+        radial-gradient(ellipse 45% 55% at 85% 75%,rgba(192,107,138,.06) 0%,transparent 65%); }
+    .stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--dur) ease-in-out infinite;opacity:0}
+    @keyframes twinkle{0%,100%{opacity:0}50%{opacity:var(--brightness)}}
+    .container{position:relative;z-index:1;width:100%;max-width:560px;display:flex;flex-direction:column;gap:24px}
+    .header{text-align:center}
+    .eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--indigo-dim);margin-bottom:12px;font-weight:400}
+    .header h1{font-family:'Playfair Display',serif;font-weight:300;font-size:clamp(20px,5vw,28px);line-height:1.4}
+    .header h1 em{font-style:italic;background:linear-gradient(135deg,var(--indigo),var(--rose));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .panel{background:rgba(13,16,20,.85);border:1px solid var(--border);border-radius:10px;
+      padding:22px 24px;display:flex;flex-direction:column;gap:18px}
+    .panel-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--indigo-dim);font-weight:400}
+    .field{display:flex;flex-direction:column;gap:7px}
+    .field-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);
+      font-weight:400;display:flex;align-items:center;gap:8px}
+    .opt{font-size:11px;color:var(--text-faint);letter-spacing:.5px;text-transform:none;font-style:italic;font-weight:300}
+    .field-hint{font-size:11px;color:var(--text-faint);letter-spacing:.3px;line-height:1.6}
+    select,textarea{background:rgba(7,9,11,.8);border:1px solid rgba(92,107,192,.2);
+      border-radius:6px;color:var(--text-dim);font-family:'Jost',sans-serif;font-size:13px;
+      font-weight:300;letter-spacing:.3px;outline:none;transition:border-color .3s}
+    select:focus,textarea:focus{border-color:rgba(92,107,192,.4)}
+    select{padding:11px 38px 11px 14px;cursor:pointer;appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8c2f0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 14px center}
+    select option{background:#0d1014}
+    textarea{line-height:1.8;padding:12px 14px;resize:vertical;min-height:130px}
+    textarea::placeholder{color:var(--text-faint);font-style:italic}
+    .vol-row{display:flex;align-items:center;gap:10px}
+    .vol-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);
+      width:78px;flex-shrink:0;font-weight:400}
+    .vol-val{font-size:12px;color:var(--indigo-dim);letter-spacing:1px;width:44px;text-align:right;flex-shrink:0}
+    input[type=range]{-webkit-appearance:none;flex:1;height:1px;background:rgba(255,255,255,.1);outline:none;cursor:pointer}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;
+      border-radius:50%;background:var(--indigo);cursor:pointer}
+    input.rose-range::-webkit-slider-thumb{background:var(--rose)}
+    .tune-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .repeat-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .repeat-opt{font-size:12px;letter-spacing:1.5px;color:var(--text-faint);cursor:pointer;
+      padding:6px 14px;border-radius:4px;border:1px solid rgba(92,107,192,.15);
+      transition:all .25s;user-select:none}
+    .repeat-opt:hover{border-color:rgba(92,107,192,.4);color:var(--text-dim)}
+    .repeat-opt.chosen{border-color:rgba(92,107,192,.55);color:var(--indigo-dim);background:rgba(92,107,192,.08)}
+    .sound-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .sound-btn{background:none;border:1px solid rgba(92,107,192,.18);border-radius:6px;
+      color:var(--text-faint);font-family:'Jost',sans-serif;font-size:11px;font-weight:400;
+      letter-spacing:2px;text-transform:uppercase;padding:9px 10px;cursor:pointer;
+      transition:all .25s;text-align:center}
+    .sound-btn:hover{border-color:rgba(92,107,192,.4);color:var(--text-dim)}
+    .sound-btn.on{border-color:rgba(92,107,192,.55);color:var(--indigo-dim);
+      background:rgba(92,107,192,.08);box-shadow:0 0 12px rgba(92,107,192,.1)}
+    .sound-btn.rose-on{border-color:rgba(192,107,138,.55)!important;color:var(--rose-dim)!important;
+      background:rgba(192,107,138,.07)!important;box-shadow:0 0 12px rgba(192,107,138,.08)!important}
+    .action-row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .play-btn{background:linear-gradient(135deg,rgba(92,107,192,.2),rgba(192,107,138,.1));
+      border:1px solid rgba(92,107,192,.35);color:var(--text);font-family:'Jost',sans-serif;
+      font-size:12px;font-weight:400;letter-spacing:4px;text-transform:uppercase;
+      padding:13px 34px;border-radius:4px;cursor:pointer;transition:all .4s}
+    .play-btn:hover{border-color:rgba(92,107,192,.65);
+      background:linear-gradient(135deg,rgba(92,107,192,.3),rgba(192,107,138,.15));
+      box-shadow:0 0 20px rgba(92,107,192,.12)}
+    .play-btn.active{border-color:rgba(192,107,138,.55);
+      background:linear-gradient(135deg,rgba(192,107,138,.15),rgba(92,107,192,.1));
+      color:var(--rose-dim)}
+    .stop-btn{background:none;border:1px solid rgba(92,107,192,.2);color:var(--text-faint);
+      font-family:'Jost',sans-serif;font-size:11px;font-weight:400;letter-spacing:3px;
+      text-transform:uppercase;padding:12px 20px;border-radius:4px;cursor:pointer;transition:all .3s}
+    .stop-btn:hover{border-color:rgba(192,107,138,.4);color:var(--rose-dim)}
+    .now-playing{display:none;flex-direction:column;gap:10px;padding:16px;
+      background:rgba(92,107,192,.06);border:1px solid rgba(92,107,192,.15);border-radius:8px}
+    .now-playing.visible{display:flex}
+    .np-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--indigo-dim)}
+    .np-text{font-family:'Playfair Display',serif;font-style:italic;font-weight:300;
+      font-size:clamp(15px,2.8vw,18px);color:var(--text);line-height:1.6}
+    .np-meta{display:flex;justify-content:space-between}
+    .np-counter{font-size:11px;letter-spacing:2px;color:var(--text-faint)}
+    .np-loop{font-size:11px;letter-spacing:2px;color:var(--rose-dim)}
+    .progress-bar-wrap{width:100%;height:1px;background:rgba(255,255,255,.06)}
+    .progress-bar-fill{height:100%;
+      background:linear-gradient(90deg,var(--indigo-dim),var(--indigo),var(--rose));
+      width:0%;transition:width .4s linear}
+    .wave-row{display:flex;align-items:center;justify-content:center;gap:10px;
+      opacity:0;transition:opacity .5s;min-height:20px}
+    .wave-row.visible{opacity:1}
+    .sub-wave{display:flex;align-items:center;gap:3px;height:16px}
+    .sub-bar{width:2px;border-radius:1px;
+      background:linear-gradient(180deg,var(--indigo),var(--rose));
+      animation:wave-anim 1.2s ease-in-out infinite}
+    .sub-bar:nth-child(1){height:4px;animation-delay:0s}
+    .sub-bar:nth-child(2){height:9px;animation-delay:.15s}
+    .sub-bar:nth-child(3){height:13px;animation-delay:.3s}
+    .sub-bar:nth-child(4){height:9px;animation-delay:.45s}
+    .sub-bar:nth-child(5){height:4px;animation-delay:.6s}
+    @keyframes wave-anim{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:1}}
+    .wave-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--indigo-dim)}
+    .err-msg{font-size:12px;letter-spacing:1px;color:var(--rose-dim);text-align:center;min-height:14px}
+    .subliminal-note{font-size:11px;color:var(--rose-dim);letter-spacing:.5px;text-align:center;
+      line-height:1.7;padding:8px 14px;border:1px solid rgba(192,107,138,.2);
+      border-radius:6px;background:rgba(192,107,138,.04)}
+  </style>
+</head>
+<body>
+<div class="stars" id="starsContainer"></div>
+<div class="container">
+
+  <div class="header">
+    <div class="eyebrow">Subliminal Affirmation Player</div>
+    <h1>Speak to Your <em>Subconscious</em></h1>
+  </div>
+
+  <!-- 1. Voice & Settings -->
+  <div class="panel">
+    <div class="panel-title">Voice &amp; Settings</div>
+
+    <div class="field">
+      <div class="field-label">Voice</div>
+      <select id="voiceSelect"><option value="">Loading voices…</option></select>
+    </div>
+
+    <div class="tune-row">
+      <div class="field">
+        <div class="field-label">Speed</div>
+        <div class="vol-row">
+          <input type="range" id="rateSlider" min="0.5" max="1.3" step="0.05" value="0.82">
+          <span class="vol-val" id="rateVal">0.82×</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Pitch</div>
+        <div class="vol-row">
+          <input type="range" id="pitchSlider" min="0.7" max="1.2" step="0.05" value="0.95">
+          <span class="vol-val" id="pitchVal">0.95</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Voice Volume <span class="opt">— subliminal level</span></div>
+      <div class="vol-row" style="gap:6px">
+        <span style="font-size:10px;color:var(--text-faint);flex-shrink:0">Inaudible</span>
+        <input type="range" id="voiceVolSlider" class="rose-range" min="0" max="1" step="0.01" value="0.04">
+        <span style="font-size:10px;color:var(--text-faint);flex-shrink:0">Loud</span>
+        <span class="vol-val" id="voiceVolVal" style="color:var(--rose-dim)">4%</span>
+      </div>
+      <div class="subliminal-note" id="volNote">
+        ✦ At 4% the voice slips below conscious hearing — use Rain + Brown Noise to cover it completely.
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Background Sounds -->
+  <div class="panel">
+    <div class="panel-title">Background Sounds
+      <span class="opt" style="font-size:11px;text-transform:none;letter-spacing:0">— layer any combination</span>
+    </div>
+    <div class="sound-grid">
+      <button class="sound-btn" id="pianoBtn" onclick="toggleLayer('piano')">🎹 Piano</button>
+      <button class="sound-btn" id="rainBtn"  onclick="toggleLayer('rain')">🌧 Rain</button>
+      <button class="sound-btn" id="noiseBtn" onclick="toggleLayer('noise')">〰 Brown Noise</button>
+      <button class="sound-btn" id="bowlBtn"  onclick="toggleLayer('bowl')">🔔 Singing Bowl</button>
+    </div>
+    <div class="vol-row">
+      <span class="vol-label">Background</span>
+      <input type="range" id="bgVolSlider" min="0" max="1" step="0.02" value="0.55"
+             oninput="setBgVolume(this.value)">
+      <span class="vol-val" id="bgVolVal">55%</span>
+    </div>
+    <div class="field-hint">Rain + Brown Noise together completely mask the voice. Piano and bowl add atmosphere.</div>
+  </div>
+
+  <!-- 3. Affirmations -->
+  <div class="panel">
+    <div class="panel-title">Affirmations</div>
+
+    <div class="field">
+      <div class="field-label">Your affirmations <span class="opt">— one per line</span></div>
+      <textarea id="affirmationsBox"
+        placeholder="I am calm, peaceful, and completely free.&#10;I breathe deeply and trust life.&#10;Good things flow to me effortlessly.&#10;I am becoming who I was meant to be."></textarea>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-label">Pause</span>
+      <input type="range" id="pauseSlider" min="0.5" max="6" step="0.5" value="2"
+             oninput="document.getElementById('pauseVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+      <span class="vol-val" id="pauseVal">2.0s</span>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Repeat</div>
+      <div class="repeat-row" id="repeatRow">
+        <div class="repeat-opt chosen" data-val="1">1×</div>
+        <div class="repeat-opt" data-val="3">3×</div>
+        <div class="repeat-opt" data-val="5">5×</div>
+        <div class="repeat-opt" data-val="10">10×</div>
+        <div class="repeat-opt" data-val="0">∞</div>
+      </div>
+    </div>
+
+    <div class="err-msg" id="errMsg"></div>
+    <div class="action-row">
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ Begin</button>
+      <button class="stop-btn" onclick="stopAll()">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- Now Playing -->
+  <div class="now-playing" id="nowPlaying">
+    <div class="np-label">Now Speaking</div>
+    <div class="np-text" id="npText"></div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="np-meta">
+      <div class="np-counter" id="npCounter"></div>
+      <div class="np-loop"    id="npLoop"></div>
+    </div>
+  </div>
+
+  <div class="wave-row" id="waveRow">
+    <div class="sub-wave">
+      <div class="sub-bar"></div><div class="sub-bar"></div><div class="sub-bar"></div>
+      <div class="sub-bar"></div><div class="sub-bar"></div>
+    </div>
+    <span class="wave-label">Subliminal</span>
+    <div class="sub-wave">
+      <div class="sub-bar"></div><div class="sub-bar"></div><div class="sub-bar"></div>
+      <div class="sub-bar"></div><div class="sub-bar"></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── Stars ────────────────────────────────────────────────────────────────
+(function(){
+  const c = document.getElementById('starsContainer');
+  for(let i=0;i<100;i++){
+    const s = document.createElement('div'); s.className='star';
+    const sz = Math.random()*1.5+0.5;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;` +
+      `width:${sz}px;height:${sz}px;--dur:${3+Math.random()*6}s;` +
+      `--brightness:${.1+Math.random()*.45};animation-delay:${Math.random()*8}s;`;
+    c.appendChild(s);
+  }
+})();
+
+// ── Audio context & shared background bus ───────────────────────────────
+let audioCtx = null, bgGain = null;
+
+function initAudio(){
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  bgGain   = audioCtx.createGain();
+  bgGain.gain.value = parseFloat(document.getElementById('bgVolSlider').value);
+  bgGain.connect(audioCtx.destination);
+}
+function resumeCtx(){ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }
+function setBgVolume(v){
+  if(bgGain) bgGain.gain.value = parseFloat(v);
+  document.getElementById('bgVolVal').textContent = Math.round(v*100)+'%';
+}
+
+// ── Sound layer registry ─────────────────────────────────────────────────
+const layers = {
+  piano:{on:false,stop:null},
+  rain: {on:false,stop:null},
+  noise:{on:false,stop:null},
+  bowl: {on:false,stop:null}
+};
+
+function toggleLayer(name){
+  initAudio(); resumeCtx();
+  const L = layers[name];
+  if(L.on){
+    if(L.stop){ L.stop(); L.stop=null; }
+    L.on = false;
+  } else {
+    L.stop = starters[name]();
+    L.on = true;
+  }
+  updateSoundBtns();
+}
+
+function updateSoundBtns(){
+  const roseSet = new Set(['rain','noise']);
+  ['piano','rain','noise','bowl'].forEach(n => {
+    const b = document.getElementById(n+'Btn');
+    b.classList.toggle('on',      layers[n].on);
+    b.classList.toggle('rose-on', layers[n].on && roseSet.has(n));
+  });
+}
+
+// ── Piano ────────────────────────────────────────────────────────────────
+const PIANO_NOTES = [261.63,329.63,392.00,329.63,293.66,349.23,392.00,440.00];
+
+function startPiano(){
+  let ni=0, t=null;
+  function tick(){
+    const f = PIANO_NOTES[ni % PIANO_NOTES.length];
+    pTone(f, 1.8);
+    if(ni%3===0) pTone(f*1.5, 1.4, 0.1);
+    ni++;
+    t = setTimeout(tick, 1200);
+  }
+  function pTone(f, dur, delay=0){
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.connect(g); g.connect(bgGain);
+    o.type='sine'; o.frequency.value=f;
+    const t0 = audioCtx.currentTime+delay;
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(0.55, t0+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+    o.start(t0); o.stop(t0+dur+0.1);
+  }
+  tick();
+  return () => { clearTimeout(t); };
+}
+
+// ── Brown Noise ──────────────────────────────────────────────────────────
+function startBrownNoise(){
+  const sz  = 4096;
+  const buf = audioCtx.createScriptProcessor(sz, 1, 1);
+  let last  = 0;
+  buf.onaudioprocess = e => {
+    const out = e.outputBuffer.getChannelData(0);
+    for(let i=0;i<sz;i++){
+      const w = Math.random()*2-1;
+      last = (last + 0.02*w) / 1.02;
+      out[i] = last * 3.5;
+    }
+  };
+  const g = audioCtx.createGain(); g.gain.value = 0.9;
+  buf.connect(g); g.connect(bgGain);
+  return () => { try{ buf.disconnect(); g.disconnect(); }catch(e){} };
+}
+
+// ── Rain ─────────────────────────────────────────────────────────────────
+function startRain(){
+  const sz  = 2048;
+  const src = audioCtx.createScriptProcessor(sz, 1, 1);
+  src.onaudioprocess = e => {
+    const out = e.outputBuffer.getChannelData(0);
+    for(let i=0;i<sz;i++) out[i] = Math.random()*2-1;
+  };
+  const lp = audioCtx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=1600;
+  const hp = audioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=280;
+  const g  = audioCtx.createGain(); g.gain.value = 0.75;
+  src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(bgGain);
+  return () => { try{ src.disconnect();hp.disconnect();lp.disconnect();g.disconnect(); }catch(e){} };
+}
+
+// ── Singing Bowl ─────────────────────────────────────────────────────────
+function startBowl(){
+  let t = null;
+  function ring(){
+    [432, 540, 648].forEach((f,i) => {
+      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.connect(g); g.connect(bgGain);
+      o.type='sine'; o.frequency.value=f;
+      const t0 = audioCtx.currentTime + i*0.04;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.18/(i+1), t0+0.08);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+5);
+      o.start(t0); o.stop(t0+5.2);
+    });
+    t = setTimeout(ring, 7000);
+  }
+  ring();
+  return () => { clearTimeout(t); };
+}
+
+const starters = { piano:startPiano, rain:startRain, noise:startBrownNoise, bowl:startBowl };
+
+// ── Slider displays ──────────────────────────────────────────────────────
+document.getElementById('rateSlider').addEventListener('input', function(){
+  document.getElementById('rateVal').textContent = parseFloat(this.value).toFixed(2)+'×';
+});
+document.getElementById('pitchSlider').addEventListener('input', function(){
+  document.getElementById('pitchVal').textContent = parseFloat(this.value).toFixed(2);
+});
+document.getElementById('voiceVolSlider').addEventListener('input', function(){
+  const p = Math.round(this.value*100);
+  document.getElementById('voiceVolVal').textContent = p+'%';
+  const n = document.getElementById('volNote');
+  if(p<=5)       n.textContent='✦ At '+p+'% the voice slips below conscious hearing — use Rain + Brown Noise to cover it completely.';
+  else if(p<=15) n.textContent='✦ Very quiet — barely perceptible under background noise.';
+  else if(p<=35) n.textContent='✦ Soft — audible in a quiet room, partially masked by background sounds.';
+  else           n.textContent='✦ Audible — the voice will be clearly heard above the background.';
+});
+
+// ── Repeat picker ────────────────────────────────────────────────────────
+let repeatCount = 1; // 0 = infinite
+document.getElementById('repeatRow').addEventListener('click', e => {
+  if(!e.target.classList.contains('repeat-opt')) return;
+  document.querySelectorAll('.repeat-opt').forEach(o => o.classList.remove('chosen'));
+  e.target.classList.add('chosen');
+  repeatCount = parseInt(e.target.dataset.val);
+});
+
+// ── Voices ───────────────────────────────────────────────────────────────
+const PRIORITY = [
+  'Microsoft Guy Online (Natural)', 'Microsoft Andrew Online (Natural)',
+  'Microsoft Christopher Online (Natural)', 'Microsoft David', 'Microsoft Mark',
+  'Google US English', 'Google UK English Male'
+];
+function scoreVoice(v){
+  let s=0; const n=v.name.toLowerCase();
+  PRIORITY.forEach((p,i) => { if(v.name.includes(p)) s+=300-i*30; });
+  if(/neural|natural|enhanced/.test(n)) s+=8;
+  if(n.includes('microsoft'))           s+=3;
+  if(n.includes('male'))                s+=5;
+  return s;
+}
+let allVoices = [];
+function populateVoices(){
+  const raw = window.speechSynthesis.getVoices();
+  if(!raw.length) return;
+  allVoices = raw.filter(v => v.lang.startsWith('en'))
+                 .sort((a,b) => scoreVoice(b)-scoreVoice(a));
+  const sel = document.getElementById('voiceSelect');
+  sel.innerHTML = '';
+  allVoices.forEach((v,i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = v.name + (PRIORITY.some(p => v.name.includes(p)) ? '  ★' : '');
+    sel.appendChild(o);
+  });
+}
+speechSynthesis.onvoiceschanged = populateVoices;
+populateVoices();
+
+// ── Playback ─────────────────────────────────────────────────────────────
+let isPlaying = false, shouldStop = false, currentLine = 0, currentLoop = 0;
+
+function getLines(){
+  return document.getElementById('affirmationsBox').value
+    .split('\n').map(l => l.trim()).filter(Boolean);
+}
+function getVoice(){
+  const i = parseInt(document.getElementById('voiceSelect').value);
+  return allVoices[i] || null;
+}
+
+function showNP(text, li, total, loop, loops){
+  document.getElementById('nowPlaying').classList.add('visible');
+  document.getElementById('npText').textContent    = text;
+  document.getElementById('progressFill').style.width = ((li+1)/total*100)+'%';
+  document.getElementById('npCounter').textContent = (li+1)+' of '+total;
+  const inf = loops===0;
+  document.getElementById('npLoop').textContent =
+    (loops===1 && !inf) ? '' :
+    (inf ? 'Loop '+(loop+1)+' of ∞' : 'Loop '+(loop+1)+' of '+loops);
+  document.getElementById('waveRow').classList.add('visible');
+}
+
+function speakLine(text, voice){
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice  = voice;
+    u.rate   = parseFloat(document.getElementById('rateSlider').value);
+    u.pitch  = parseFloat(document.getElementById('pitchSlider').value);
+    u.volume = parseFloat(document.getElementById('voiceVolSlider').value);
+    u.onend  = resolve;
+    u.onerror = resolve;
+    window.speechSynthesis.speak(u);
+  });
+}
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function runPlayback(){
+  const lines = getLines();
+  if(!lines.length){
+    document.getElementById('errMsg').textContent = 'Type at least one affirmation above.';
+    stopAll(); return;
+  }
+  const voice = getVoice();
+  if(!voice){
+    document.getElementById('errMsg').textContent = 'No voice selected.';
+    stopAll(); return;
+  }
+  document.getElementById('errMsg').textContent = '';
+  const pauseMs = parseFloat(document.getElementById('pauseSlider').value)*1000;
+  const loops   = repeatCount;
+  let loop      = currentLoop;
+
+  while(!shouldStop && (loops===0 || loop<loops)){
+    for(let li=currentLine; li<lines.length; li++){
+      if(shouldStop) break;
+      currentLine=li; currentLoop=loop;
+      showNP(lines[li], li, lines.length, loop, loops);
+      await speakLine(lines[li], voice);
+      if(shouldStop) break;
+      if(li < lines.length-1) await sleep(pauseMs);
+    }
+    currentLine=0; loop++;
+    if(!shouldStop && (loops===0 || loop<loops)) await sleep(pauseMs);
+  }
+
+  if(!shouldStop){
+    document.getElementById('npText').textContent    = 'Session complete.';
+    document.getElementById('npCounter').textContent = '✦ All done';
+    document.getElementById('npLoop').textContent    = '';
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('waveRow').classList.remove('visible');
+  }
+  setIdle(); isPlaying=false; currentLine=0; currentLoop=0;
+}
+
+function togglePlay(){
+  if(isPlaying){
+    window.speechSynthesis.pause();
+    setIdle(); isPlaying=false;
+  } else {
+    if(!allVoices.length){
+      document.getElementById('errMsg').textContent='Voices not loaded yet.'; return;
+    }
+    shouldStop=false; isPlaying=true; setActive();
+    initAudio(); resumeCtx();
+    runPlayback();
+  }
+}
+
+function stopAll(){
+  shouldStop=true; isPlaying=false; currentLine=0; currentLoop=0;
+  window.speechSynthesis.cancel();
+  document.getElementById('nowPlaying').classList.remove('visible');
+  document.getElementById('waveRow').classList.remove('visible');
+  document.getElementById('progressFill').style.width='0%';
+  setIdle();
+}
+
+function setActive(){
+  const b=document.getElementById('playBtn');
+  b.textContent='⏸ Pause'; b.classList.add('active');
+}
+function setIdle(){
+  const b=document.getElementById('playBtn');
+  b.textContent='▶ Begin'; b.classList.remove('active');
+}
+</script>
+</body>
+</html>
